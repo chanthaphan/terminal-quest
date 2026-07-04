@@ -470,6 +470,7 @@
     term.updatePrompt();
     G.renderSidebar();
     G.renderStory();
+    if (CLIQ.stage && !CLIQ.stage.traveling) CLIQ.stage.walkIn(); // arrive on foot, always
     G.saveSession();
     $('#term-input').focus();
   };
@@ -486,7 +487,7 @@
     let sceneId = 'menu';
     if (G.state.class) {
       if (G.sandbox) sceneId = 'sandbox';
-      else if (G.currentModule) sceneId = G.currentModule.id;
+      else sceneId = G.currentModule ? G.currentModule.id : 'world';
     }
     stage.setScene(sceneId, G.state.class);
     const panel = stage.dialogEl();
@@ -498,9 +499,9 @@
       panel.appendChild(el('div', 'story-title', '⚔ Terminal Quest'));
       const p = el('div', 'story-text');
       p.innerHTML =
-        'Welcome, adventurer. Nine realms await:<br><br>' +
-        CLIQ.modules.map((m) => `${m.icon} <b>${m.title}</b> — ${m.tagline}`).join('<br>') +
-        '<br><br>Pick a quest from the map on the left. Type commands into the terminal below to cast your spells.';
+        'You stand at the crossroads of nine realms, adventurer. ' +
+        '<b>Click a landmark on the world above</b> to journey there — or pick a quest from the realm list. ' +
+        'Type commands into the terminal below to cast your spells.';
       panel.appendChild(p);
       return;
     }

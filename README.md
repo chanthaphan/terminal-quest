@@ -39,6 +39,12 @@ all times — completing a task fires a casting animation with a spark burst, an
 walk into the same scene for battles. Story, tasks and quizzes live in a Final
 Fantasy-style dialog box over the scene; the CLI terminal stays at the bottom.
 
+**The journey is part of the game**: between quests you see a far **overworld view** —
+rolling twilight hills with all nine realm landmarks along a winding path (clickable;
+conquered realms show a ✦, locked ones a 🔒). Changing realms plays a travel sequence:
+your hero walks the path to the pulsing landmark, the screen flash-zooms, and you
+arrive inside the dungeon on foot. Bosses make their entrance only after you arrive.
+
 ## Game mechanics
 
 - **Quests** — each realm has 3–6 quests of hands-on terminal tasks with hints.

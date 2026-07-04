@@ -158,6 +158,10 @@
     'stars+motes': { n: 0, combo: ['stars', 'motes'] },
   };
 
+  // ---- overworld landmark positions (left %, in module order) ----------------
+
+  const LANDMARK_X = { bash: 8, remote: 18, concepts: 28, azure: 38, k8s: 48, git: 58, docker: 68, ops: 78, final: 89 };
+
   // ---- stage ------------------------------------------------------------------
 
   const S = (CLIQ.stage = {
@@ -165,8 +169,12 @@
     els: {},
     sceneId: null,
     heroClass: null,
+    heroScale: 0,
     enemyName: null,
     dissolved: false,
+    traveling: false,
+    _timers: [],
+    _pendingBattle: null,
 
     init(root) {
       this.root = root;
@@ -180,6 +188,7 @@
         '  </div>' +
         '  <div class="actor actor-enemy" hidden><canvas class="sprite-bloom"></canvas><canvas class="sprite-main"></canvas><div class="ground-shadow"></div></div>' +
         '  <div class="actor actor-hero"><canvas class="sprite-bloom"></canvas><canvas class="sprite-main"></canvas><div class="ground-shadow"></div></div>' +
+        '  <div class="stage-flash"></div>' +
         '  <div class="stage-vignette"></div>' +
         '  <div class="stage-scanlines"></div>' +
         '</div>' +
@@ -191,6 +200,7 @@
         plates: root.querySelector('.stage-plates'),
         hero: root.querySelector('.actor-hero'),
         enemy: root.querySelector('.actor-enemy'),
+        flash: root.querySelector('.stage-flash'),
         dialog: root.querySelector('.dialog-content'),
       };
     },
@@ -199,19 +209,104 @@
       return this.els.dialog;
     },
 
+    reduced() {
+      return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    },
+
     drawActor(actorEl, sprite, scale) {
       CLIQ.drawSprite(actorEl.querySelector('.sprite-main'), sprite, scale);
       CLIQ.drawSprite(actorEl.querySelector('.sprite-bloom'), sprite, scale);
     },
 
-    setScene(id, heroClass) {
-      const theme = T[id] || T.menu;
-      if (this.heroClass !== heroClass || !this.els.hero.querySelector('.sprite-main').width) {
-        this.heroClass = heroClass;
-        this.drawActor(this.els.hero, CLIQ.heroSprite(heroClass), 7);
+    drawHero(scale) {
+      if (this.heroScale === scale && this._heroDrawnClass === this.heroClass) return;
+      this.heroScale = scale;
+      this._heroDrawnClass = this.heroClass;
+      this.drawActor(this.els.hero, CLIQ.heroSprite(this.heroClass), scale);
+    },
+
+    _t(ms, fn) {
+      this._timers.push(setTimeout(fn, ms));
+    },
+
+    cancelTravel() {
+      this._timers.forEach(clearTimeout);
+      this._timers = [];
+      if (this.traveling) {
+        this.traveling = false;
+        this.root.classList.remove('traveling');
+        this.els.viewport.classList.remove('zoom-arrive');
+        this.els.flash.classList.remove('flash-on');
+        const hero = this.els.hero;
+        hero.classList.remove('walking');
+        hero.style.transition = '';
+        if (this._pendingBattle) { const p = this._pendingBattle; this._pendingBattle = null; this.battle(p[0], p[1], p[2], p[3]); }
       }
-      if (this.sceneId === id) return;
+    },
+
+    setScene(id, heroClass) {
+      this.heroClass = heroClass;
+      if (this.sceneId === id) { this.drawHero(id === 'world' ? 4 : 7); return; }
+      const from = this.sceneId;
+      this.cancelTravel();
+      const travel = from && from !== 'menu' && id !== 'menu' && id !== 'world' && !this.reduced();
       this.sceneId = id;
+      if (travel) this.runTravel(id);
+      else this.buildScene(id);
+    },
+
+    // Journey: far overworld view → hero walks to the landmark → flash-zoom → realm.
+    runTravel(target) {
+      this.traveling = true;
+      this.root.classList.add('traveling');
+      this.buildScene('world');
+      const hero = this.els.hero;
+      const lmx = LANDMARK_X[target] != null ? LANDMARK_X[target] : 50;
+      hero.classList.add('walking');
+      hero.style.transition = 'none';
+      hero.style.right = '90%';
+      void hero.offsetWidth;
+      hero.style.transition = 'right 1.9s linear';
+      hero.style.right = Math.max(2, 100 - lmx - 3) + '%';
+      const targetLm = this.els.layers.querySelector(`.landmark[data-realm="${target}"]`);
+      if (targetLm) targetLm.classList.add('lm-target');
+      this._t(1950, () => {
+        this.els.flash.classList.add('flash-on');
+        this.els.viewport.classList.add('zoom-arrive');
+        this._t(420, () => {
+          hero.classList.remove('walking');
+          hero.style.transition = '';
+          this.els.viewport.classList.remove('zoom-arrive');
+          this.buildScene(target);
+          this.els.flash.classList.remove('flash-on');
+          this.walkIn();
+          this._t(700, () => {
+            this.traveling = false;
+            this.root.classList.remove('traveling');
+            if (this._pendingBattle) { const p = this._pendingBattle; this._pendingBattle = null; this.battle(p[0], p[1], p[2], p[3]); }
+          });
+        });
+      });
+    },
+
+    walkIn() {
+      this.animOnce(this.els.hero, 'walk-in', 750);
+    },
+
+    buildScene(id) {
+      const theme = T[id] || T.menu;
+      const hero = this.els.hero;
+      if (id === 'world') {
+        this.drawHero(4);
+        hero.style.right = '90%';
+        hero.style.bottom = '26%';
+      } else {
+        this.drawHero(7);
+        hero.style.right = '';
+        hero.style.bottom = '';
+        hero.style.transition = '';
+      }
+      if (id === 'world') return this.buildWorld();
       const L = this.els.layers;
       let html = `<div class="layer sky" style="background:${theme.sky}"></div>`;
       if (theme.celestial) {
@@ -234,6 +329,52 @@
       L.classList.add('scene-enter');
     },
 
+    // Far view: rolling hills, a winding path, one landmark per realm (clickable).
+    buildWorld() {
+      const G = CLIQ.game;
+      const L = this.els.layers;
+      let html =
+        '<div class="layer sky" style="background:linear-gradient(180deg,#1a1440 0%,#3c2a6e 45%,#8a4a6e 78%,#c97a5a 100%)"></div>' +
+        '<div class="layer celestial" style="left:74%;top:12%;width:52px;height:52px;background:#ffe9c4;box-shadow:0 0 60px 26px rgba(255,215,150,0.5);border-radius:50%"></div>' +
+        '<div class="layer plane-far">' +
+        '  <div class="prop" style="left:-10%;bottom:26%;width:60%;height:34%;background:#241a52;border-radius:50% 50% 0 0"></div>' +
+        '  <div class="prop" style="left:38%;bottom:26%;width:52%;height:28%;background:#2c2060;border-radius:50% 50% 0 0"></div>' +
+        '  <div class="prop" style="left:76%;bottom:26%;width:46%;height:38%;background:#1e164a;border-radius:50% 50% 0 0"></div>' +
+        '</div>';
+      html += '<div class="layer plane-mid">';
+      for (const mod of CLIQ.modules) {
+        const x = LANDMARK_X[mod.id] != null ? LANDMARK_X[mod.id] : 50;
+        const y = 27 + (Object.keys(LANDMARK_X).indexOf(mod.id) % 2) * 5;
+        const done = G && mod.quests.every((q) => G.state.done[q.id]);
+        const locked = G && G.moduleLocked(mod);
+        html +=
+          `<div class="landmark${done ? ' lm-done' : ''}${locked ? ' lm-locked' : ''}" data-realm="${mod.id}" style="left:${x}%;bottom:${y}%" title="${mod.title}">` +
+          `<span class="lm-flag">${done ? '✦' : locked ? '🔒' : ''}</span>` +
+          `<span class="lm-icon">${mod.icon}</span><span class="lm-base"></span></div>`;
+      }
+      html += '</div>';
+      html +=
+        '<div class="layer stage-ground" style="background:linear-gradient(180deg,#3a2a54,#1a1230);height:27%"></div>' +
+        '<div class="layer world-path"></div>' +
+        '<div class="glow" style="left:74%;top:12%;width:280px;height:280px;background:radial-gradient(circle,rgba(255,215,150,0.35),transparent 70%)"></div>' +
+        `<div class="layer particles">${this.particleHTML('stars+motes')}</div>`;
+      L.innerHTML = html;
+      L.classList.remove('scene-enter');
+      void L.offsetWidth;
+      L.classList.add('scene-enter');
+      // landmarks travel you there
+      L.querySelectorAll('.landmark').forEach((lm) => {
+        lm.addEventListener('click', () => {
+          const g = CLIQ.game;
+          if (!g || !g.state.class) return;
+          const mod = CLIQ.modules.find((m) => m.id === lm.dataset.realm);
+          if (!mod || g.moduleLocked(mod)) return;
+          const quest = mod.quests.find((q) => !g.state.done[q.id]) || mod.quests[0];
+          g.startQuest(mod, quest);
+        });
+      });
+    },
+
     particleHTML(type) {
       if (!type) return '';
       const recipe = PARTICLES[type];
@@ -253,6 +394,7 @@
     // ---- battle presentation ----
 
     battle(meta, enemyPct, hearts, won) {
+      if (this.traveling) { this._pendingBattle = [meta, enemyPct, hearts, won]; return; }
       const E = this.els;
       if (this.enemyName !== meta.name) {
         this.enemyName = meta.name;
