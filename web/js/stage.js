@@ -469,6 +469,116 @@
       this.burst(this.els.hero, '#fcd34d', 10);
     },
 
+    // ---- per-command action FX -------------------------------------------------
+
+    heroPoint(dx, dy) {
+      const r = this.els.hero.getBoundingClientRect();
+      const v = this.els.viewport.getBoundingClientRect();
+      return { x: r.left - v.left + r.width / 2 + (dx || 0), y: r.top - v.top + r.height / 2 + (dy || 0) };
+    },
+
+    spawn(cls, x, y, css, ttl) {
+      const d = document.createElement('div');
+      d.className = cls;
+      d.style.cssText = `left:${x}px;top:${y}px;` + (css || '');
+      this.els.fx.appendChild(d);
+      setTimeout(() => d.remove(), ttl || 1200);
+      return d;
+    },
+
+    chip(text, isErr) {
+      const p = this.heroPoint(0, -this.els.hero.offsetHeight / 2 - 14);
+      this.spawn('fx-label' + (isErr ? ' fx-label-err' : ''), p.x, p.y, '', 1200).textContent = text;
+    },
+
+    fxFor(e) {
+      const sub = e.argv && e.argv[1];
+      if (e.cmd === 'git')
+        return { status: 'scan', log: 'scan', branch: 'scan', diff: 'scan', init: 'conjure', add: 'write', commit: 'write', merge: 'transform', checkout: 'step', switch: 'step' }[sub] || 'transform';
+      if (e.cmd === 'docker')
+        return { ps: 'scan', images: 'scan', pull: 'proj:#7dd3fc', run: 'conjure', start: 'transform', restart: 'transform', stop: 'transform', rm: 'slash', rmi: 'slash', logs: 'read', exec: 'transform', build: 'conjure' }[sub] || 'scan';
+      if (e.cmd === 'kubectl')
+        return { get: 'scan', describe: 'read', logs: 'read', scale: 'conjure', delete: 'slash', set: 'transform', apply: 'conjure', rollout: 'transform', config: 'scan' }[sub] || 'scan';
+      if (e.cmd === 'az') {
+        if (e.raw.includes(' delete')) return 'slash';
+        if (e.raw.includes(' create')) return 'conjure';
+        if (/ (list|show)\b/.test(e.raw)) return 'scan';
+        if (sub === 'login') return 'write';
+        return 'transform';
+      }
+      return {
+        cd: 'step', ssh: 'portal', exit: 'portal',
+        ls: 'scan', find: 'scan', grep: 'scan', ps: 'scan', top: 'scan', df: 'scan', du: 'scan', free: 'scan',
+        ss: 'scan', netstat: 'scan', pwd: 'scan', whoami: 'scan', hostname: 'scan', history: 'scan',
+        env: 'scan', which: 'scan', crontab: 'scan', ip: 'scan', ifconfig: 'scan',
+        cat: 'read', head: 'read', tail: 'read', man: 'read', help: 'read', wc: 'read',
+        mkdir: 'conjure', touch: 'conjure', cp: 'conjure', tar: 'conjure',
+        echo: 'write',
+        sed: 'transform', awk: 'transform', sort: 'transform', uniq: 'transform', cut: 'transform',
+        chmod: 'transform', mv: 'transform', bash: 'transform', sh: 'transform', systemctl: 'transform',
+        rm: 'slash', kill: 'slash',
+        ping: 'proj:#22d3ee', traceroute: 'proj:#22d3ee', nc: 'proj:#22d3ee',
+        dig: 'proj:#c084fc', nslookup: 'proj:#c084fc',
+        curl: 'proj:#fb923c', scp: 'proj:#4ade80',
+      }[e.cmd] || 'scan';
+    },
+
+    // Every terminal command acts out in the scene.
+    action(e) {
+      if (this.traveling || !e.cmd || e.cmd === 'clear' || !this.els.fx) return;
+      if (this.els.fx.children.length > 12) return; // don't flood on rapid input
+      const failed = e.code !== 0;
+      this.chip('$ ' + (e.raw.length > 26 ? e.raw.slice(0, 24) + '…' : e.raw), failed);
+      const hero = this.els.hero;
+      if (failed) {
+        const p = this.heroPoint(-46, 0);
+        this.spawn('fx-puff', p.x, p.y, '', 750);
+        this.pop(hero, '✗', 'dmg-hero');
+        if (CLIQ.sfx) CLIQ.sfx.play('error');
+        return;
+      }
+      const kind = this.fxFor(e);
+      const side = this.heroPoint(-56, 4);
+      if (kind === 'scan') {
+        this.spawn('fx-ring', side.x, side.y, 'width:60px;height:60px', 950);
+        this.spawn('fx-ring', side.x, side.y, 'width:60px;height:60px;animation-delay:.18s', 1150);
+      } else if (kind === 'read') {
+        const p = this.heroPoint(-44, -30);
+        this.spawn('fx-scroll', p.x, p.y, '', 1250);
+      } else if (kind === 'conjure') {
+        const p = this.heroPoint(-58, 14);
+        this.spawn('fx-conjure', p.x, p.y, '', 1350);
+        this.burst(hero, '#8ab4ff', 6);
+      } else if (kind === 'write') {
+        this.animOnce(hero, 'cast', 400);
+        this.burst(hero, '#fcd34d', 7);
+      } else if (kind === 'transform') {
+        const p = this.heroPoint(-48, 0);
+        this.spawn('fx-swirl', p.x, p.y, '', 950);
+      } else if (kind === 'slash') {
+        const p = this.heroPoint(-54, 0);
+        this.animOnce(hero, 'cast', 400);
+        this.spawn('fx-slash', p.x, p.y, '', 650);
+        this.burst(hero, '#ff5a5a', 8);
+      } else if (kind === 'step') {
+        this.animOnce(hero, 'step-anim', 620);
+      } else if (kind === 'portal') {
+        const p = this.heroPoint(-72, -6);
+        this.spawn('fx-portal', p.x, p.y, '', 1150);
+        this.animOnce(hero, e.cmd === 'exit' ? 'dash-right' : 'dash-left', 700);
+      } else if (kind && kind.startsWith('proj:')) {
+        const color = kind.slice(5);
+        this.animOnce(hero, 'cast', 400);
+        const p = this.heroPoint(-34, -10);
+        const dist = -Math.max(120, this.els.viewport.clientWidth * 0.42);
+        this.spawn('fx-orb', p.x, p.y, `color:${color};--dist:${dist}px`, 850);
+        this._t(760, () => {
+          if (!this.els.fx) return;
+          this.spawn('fx-echo', p.x + dist, p.y - 30, `color:${color}`, 750);
+        });
+      }
+    },
+
     strike(side) {
       const E = this.els;
       if (side === 'enemy') {

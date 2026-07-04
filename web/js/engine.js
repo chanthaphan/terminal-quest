@@ -809,6 +809,7 @@
       G.save();
       if (CLIQ.checkAchievements) CLIQ.checkAchievements({ type: 'cmd' });
     }
+    if (CLIQ.stage) CLIQ.stage.action(e); // every command acts out on the stage
     G.saveSession(); // persist world changes from every command (incl. sandbox/quiz phases)
     const task = G.currentTask();
     if (!task || task.quiz) return;

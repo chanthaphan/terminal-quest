@@ -45,6 +45,14 @@ conquered realms show a ✦, locked ones a 🔒). Changing realms plays a travel
 your hero walks the path to the pulsing landmark, the screen flash-zooms, and you
 arrive inside the dungeon on foot. Bosses make their entrance only after you arrive.
 
+**Every command acts out on stage.** Each command you type floats up as a spell chip
+(`$ mkdir spellworks`) and plays its own effect: scan rings for `ls`/`grep`/`ps`/`get`,
+an unfurling scroll for `cat`/`logs`, a conjured rune-cube for `mkdir`/`docker run`/
+`kubectl apply`/`az create`, a red X-slash for `rm`/`kill`/`delete`, arcane swirls for
+`sed`/`chmod`/`rollout`, glowing projectiles that fly out and echo for `ping`/`dig`/
+`curl`/`scp`, a portal dash for `ssh`/`exit`, side-steps for `cd`/`checkout`, and a
+gray fizzle with a ✗ when a command errors.
+
 ## Game mechanics
 
 - **Quests** — each realm has 3–6 quests of hands-on terminal tasks with hints.
