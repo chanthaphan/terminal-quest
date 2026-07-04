@@ -28,6 +28,17 @@ in its home realms:
 - ✨ **Cloud Mage** — Citadel + Chronicle
 - 🛡️ **Kube Warden** — Keep + Foundry
 
+## HD-2D presentation 🎬
+
+The whole game plays out on a persistent **HD-2D stage** (Octopath-Traveler style,
+100% CSS/canvas — no image assets): every realm has its own parallax scene with
+depth-blurred silhouette layers, bloom-lit pixel sprites, flickering light pools,
+ambient particles (torch motes, foundry embers, labyrinth mist, night stars,
+fireflies), a cinematic vignette and faint scanlines. Your hero stands in the scene at
+all times — completing a task fires a casting animation with a spark burst, and bosses
+walk into the same scene for battles. Story, tasks and quizzes live in a Final
+Fantasy-style dialog box over the scene; the CLI terminal stays at the bottom.
+
 ## Game mechanics
 
 - **Quests** — each realm has 3–6 quests of hands-on terminal tasks with hints.

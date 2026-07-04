@@ -111,17 +111,181 @@ body {
 .quest-item.locked { color: #4a5368; cursor: not-allowed; }
 .quest-status { width: 16px; text-align: center; }
 
-/* ---- stage ---- */
-#stage { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+/* ---- main column ---- */
+#layout-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
 
-#story {
-  flex: 0 0 46%;
-  overflow-y: auto;
-  padding: 20px 26px;
+/* ---- HD-2D stage ---- */
+#stage {
+  flex: 0 0 58%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
-  background:
-    radial-gradient(ellipse at top right, rgba(192, 132, 252, 0.05), transparent 50%),
-    var(--panel);
+  min-height: 0;
+}
+.stage-viewport {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  background: #05070c;
+}
+.scene-layers, .scene-layers .layer { position: absolute; inset: 0; }
+.scene-layers.scene-enter { animation: sceneenter 0.7s ease; }
+@keyframes sceneenter { from { opacity: 0; filter: brightness(2) blur(3px); } to { opacity: 1; filter: none; } }
+
+.layer.celestial { inset: auto; position: absolute; border-radius: 50%; }
+.layer.plane-far { filter: blur(2.2px); animation: parallax-far 70s ease-in-out infinite alternate; }
+.layer.plane-mid { filter: blur(0.6px); animation: parallax-mid 46s ease-in-out infinite alternate; }
+@keyframes parallax-far { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes parallax-mid { from { transform: translateX(10px); } to { transform: translateX(-10px); } }
+.prop { position: absolute; }
+.layer.stage-ground { top: auto; height: 46%; }
+.layer.stage-ground::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.layer.stage-ground::after {
+  content: ''; position: absolute; top: 3px; left: 0; right: 0; height: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent);
+}
+
+.glow {
+  position: absolute; transform: translate(-50%, -50%);
+  mix-blend-mode: screen; pointer-events: none;
+}
+.glow.flicker { animation: glowflicker 3.4s ease-in-out infinite; }
+@keyframes glowflicker {
+  0%, 100% { opacity: 0.85; } 42% { opacity: 1; } 58% { opacity: 0.7; } 76% { opacity: 0.95; }
+}
+
+/* particles */
+.particle { position: absolute; bottom: -6px; border-radius: 50%; pointer-events: none; }
+.p-mote { animation: floatup linear infinite; box-shadow: 0 0 6px currentColor; opacity: 0; }
+.p-ember { animation: emberup linear infinite; box-shadow: 0 0 8px rgba(255, 140, 50, 0.8); opacity: 0; }
+.p-firefly { animation: firefly ease-in-out infinite; box-shadow: 0 0 8px rgba(220, 255, 120, 0.9); opacity: 0; }
+.p-mist {
+  bottom: 4%; background: rgba(210, 255, 235, 0.09); border-radius: 50%;
+  filter: blur(10px); animation: mistdrift ease-in-out infinite alternate;
+}
+.p-star { bottom: auto; background: #fff; animation: twinkle ease-in-out infinite; box-shadow: 0 0 4px rgba(255,255,255,0.9); }
+@keyframes floatup {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  85% { opacity: 0.5; }
+  100% { transform: translateY(-46vh) translateX(14px); opacity: 0; }
+}
+@keyframes emberup {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-52vh) translateX(-22px); opacity: 0; }
+}
+@keyframes firefly {
+  0%, 100% { transform: translate(0, 0); opacity: 0.1; }
+  25% { transform: translate(16px, -12vh); opacity: 1; }
+  50% { transform: translate(-10px, -20vh); opacity: 0.3; }
+  75% { transform: translate(12px, -30vh); opacity: 0.9; }
+}
+@keyframes mistdrift { from { transform: translateX(-36px); } to { transform: translateX(36px); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* actors — they stand on the horizon band, always visible above the dialog box */
+.actor { position: absolute; bottom: 47%; pointer-events: none; z-index: 4; }
+.actor-hero { right: 10%; animation: herobob 2.8s ease-in-out infinite; }
+.actor-enemy { left: 8%; animation: enemybob 2.3s ease-in-out infinite; }
+@keyframes herobob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes enemybob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.actor canvas { display: block; image-rendering: pixelated; }
+.actor .sprite-bloom {
+  position: absolute; inset: 0;
+  filter: blur(7px) saturate(1.8) brightness(1.4);
+  opacity: 0.5;
+}
+.actor .sprite-main { position: relative; filter: drop-shadow(0 0 1px rgba(255,255,255,0.25)); }
+.actor .ground-shadow {
+  position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
+  width: 80%; height: 12px; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6); filter: blur(3px);
+}
+.actor-enemy.enemy-enter { animation: enemyenter 0.9s ease both, enemybob 2.3s ease-in-out 0.9s infinite; }
+@keyframes enemyenter {
+  from { transform: translateX(-80px); opacity: 0; filter: brightness(0); }
+  to { transform: translateX(0); opacity: 1; filter: none; }
+}
+.actor-hero.cast { animation: herocast 0.45s ease; }
+@keyframes herocast {
+  25% { transform: translateX(-30px) translateY(-6px); filter: brightness(1.6); }
+  100% { transform: none; }
+}
+.actor-enemy.hit .sprite-main, .actor-enemy.hit .sprite-bloom { animation: hitflash 0.45s steps(2); }
+.actor-hero.flinch { animation: heroflinch 0.45s ease; }
+@keyframes heroflinch {
+  20% { transform: translateX(16px); filter: brightness(2.4) sepia(1) hue-rotate(-50deg) saturate(4); }
+  60% { transform: translateX(-6px); }
+  100% { transform: none; }
+}
+.actor-enemy.lunge { animation: enemylunge 0.42s ease; }
+@keyframes enemylunge { 30% { transform: translateX(60px); } 100% { transform: none; } }
+.actor-enemy.dissolve { animation: dissolve 1.4s ease forwards; }
+.actor-enemy.dissolve .ground-shadow { animation: fadeout 1.4s ease forwards; }
+
+/* fx layer */
+.stage-fx { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+.spark {
+  position: absolute; width: 5px; height: 5px; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  animation: sparkfly 0.65s ease-out forwards;
+}
+@keyframes sparkfly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+.dmg-pop-hd {
+  position: absolute; transform: translateX(-50%);
+  font-size: 22px; font-weight: bold; color: #fff;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 12px rgba(255,255,255,0.5);
+  animation: dmgfloat 0.9s ease-out forwards;
+}
+.dmg-pop-hd.dmg-hero { color: #f87171; }
+
+/* battle plates on stage */
+.stage-plates { position: absolute; top: 10px; left: 12px; right: 12px; z-index: 7; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+.stage-plates[hidden] { display: none; }
+
+/* cinematic overlays */
+.stage-vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 8;
+  box-shadow: inset 0 0 70px 16px rgba(0, 0, 0, 0.45);
+}
+.stage-scanlines {
+  position: absolute; inset: 0; pointer-events: none; z-index: 9;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0 1px, transparent 1px 3px);
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+}
+
+/* FF dialog box */
+.dialog-box {
+  position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 10;
+  max-height: 52%;
+  background: linear-gradient(180deg, rgba(23, 33, 74, 0.94), rgba(13, 20, 48, 0.94));
+  border: 2px solid #dfe6ff;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8), 0 0 24px rgba(60, 80, 180, 0.3);
+  overflow: hidden;
+  display: flex;
+}
+.dialog-content {
+  overflow-y: auto;
+  padding: 12px 16px;
+  width: 100%;
+}
+.dialog-content .story-title { font-size: 16px; margin-bottom: 8px; }
+.dialog-content .story-text { font-size: 12.5px; line-height: 1.65; }
+.dialog-content .task-box { padding: 10px 13px; margin-top: 9px; background: rgba(10, 15, 36, 0.7); }
+.dialog-content .task-dots { margin: 10px 0 2px; }
+.dialog-content .battle-log { margin: 0 0 8px; border-width: 1px; padding: 7px 11px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .layer.plane-far, .layer.plane-mid, .particle, .actor-hero, .actor-enemy, .glow.flicker { animation: none !important; }
 }
 .story-crumb { font-size: 11px; color: var(--dim); letter-spacing: 1px; margin-bottom: 6px; }
 .story-title {
@@ -483,5 +647,6 @@ body {
     box-shadow: 8px 0 24px rgba(0, 0, 0, 0.5);
   }
   #sidebar.open { transform: none; }
-  #story { flex-basis: 50%; }
+  #stage { flex-basis: 56%; }
+  .dialog-box { max-height: 62%; }
 }

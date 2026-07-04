@@ -17,6 +17,7 @@
           'The shell speaks in <b>commands</b>: you type a spell, press Enter, and the realm answers. ' +
           'Every wizard first learns to <i>see where they stand</i>.',
         outro: 'You can now see, move, and read. The Sanctum acknowledges you.',
+        setup(w) { w.cwd = w.home; },
         tasks: [
           {
             text: 'Reveal your current location in the filesystem with <code>pwd</code> (<b>p</b>rint <b>w</b>orking <b>d</b>irectory).',

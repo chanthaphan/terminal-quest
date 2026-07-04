@@ -481,12 +481,20 @@
   };
 
   G.renderStory = function () {
-    const panel = $('#story');
-    panel.innerHTML = '';
-    if (!G.state.class) return G.renderClassSelect(panel);
-    if (G.sandbox) return G.renderSandbox(panel);
+    const stage = CLIQ.stage;
     const q = G.currentQuest;
+    let sceneId = 'menu';
+    if (G.state.class) {
+      if (G.sandbox) sceneId = 'sandbox';
+      else if (G.currentModule) sceneId = G.currentModule.id;
+    }
+    stage.setScene(sceneId, G.state.class);
+    const panel = stage.dialogEl();
+    panel.innerHTML = '';
+    if (!G.state.class) { stage.endBattle(); return G.renderClassSelect(panel); }
+    if (G.sandbox) { stage.endBattle(); return G.renderSandbox(panel); }
     if (!q) {
+      stage.endBattle();
       panel.appendChild(el('div', 'story-title', '⚔ Terminal Quest'));
       const p = el('div', 'story-text');
       p.innerHTML =
@@ -496,15 +504,24 @@
       panel.appendChild(p);
       return;
     }
+    if (CLIQ.battle && CLIQ.battle.isBattle(q)) {
+      const m = CLIQ.battle.meta[q.id];
+      const total = q.tasks.length;
+      const left = Math.max(0, total - G.taskIndex);
+      stage.battle(m, left / total, G.hearts, left === 0);
+      const log = el('div', 'battle-log');
+      log.innerHTML = G.battleLog || m.name + ' draws near! ' + m.taunt;
+      panel.appendChild(log);
+    } else {
+      stage.endBattle();
+    }
     panel.appendChild(el('div', 'story-crumb', `${G.currentModule.icon} ${G.currentModule.title}`));
     panel.appendChild(el('div', 'story-title', (q.boss ? '👑 BOSS: ' : '') + q.title));
     const story = el('div', 'story-text');
     story.innerHTML = q.story;
     panel.appendChild(story);
 
-    if (CLIQ.battle && CLIQ.battle.isBattle(q)) {
-      panel.appendChild(CLIQ.battle.scene(q));
-    } else if (q.boss) {
+    if (q.boss && !(CLIQ.battle && CLIQ.battle.isBattle(q))) {
       const hearts = el('div', 'hearts', '❤'.repeat(G.hearts) + '♡'.repeat(3 - G.hearts));
       panel.appendChild(hearts);
     }
@@ -727,8 +744,10 @@
         G.save();
       }
       if (CLIQ.sfx) CLIQ.sfx.play('fanfare');
-    } else if (CLIQ.sfx) {
-      CLIQ.sfx.play(inBattle ? 'hit' : 'blip');
+      if (!inBattle && CLIQ.stage) CLIQ.stage.cast();
+    } else {
+      if (CLIQ.sfx) CLIQ.sfx.play(inBattle ? 'hit' : 'blip');
+      if (!inBattle && CLIQ.stage) CLIQ.stage.cast();
     }
     if (CLIQ.checkAchievements) {
       CLIQ.checkAchievements({ type: 'task', questId: q.id, moduleId: G.currentModule && G.currentModule.id });
@@ -813,6 +832,7 @@
 
   G.boot = function () {
     G.load();
+    CLIQ.stage.init($('#stage'));
     G.initTerminal();
     term.print('Terminal Quest v1.1 — type `help` for your spellbook.');
     if (!G.resumeSession()) G.world = CLIQ.makeWorld();
