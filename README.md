@@ -53,6 +53,15 @@ an unfurling scroll for `cat`/`logs`, a conjured rune-cube for `mkdir`/`docker r
 `curl`/`scp`, a portal dash for `ssh`/`exit`, side-steps for `cd`/`checkout`, and a
 gray fizzle with a ✗ when a command errors.
 
+## Thai localization 🇹🇭
+
+Toggle ภาษาไทย/English with the **ไทย** button in the top bar. Translations use an
+English-keyed dictionary ([js/lang_th.js](web/js/lang_th.js)) with graceful fallback —
+untranslated realms stay playable in English, and commands/terminal output stay in
+English on purpose (the commands are the skill). Currently translated: all UI chrome,
+realm/quest titles, level & class names, and the full Shell Sanctum realm (Realm 1);
+remaining realms roll out tier by tier.
+
 ## Game mechanics
 
 - **Quests** — each realm has 3–6 quests of hands-on terminal tasks with hints.

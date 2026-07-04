@@ -27,7 +27,7 @@
   const SESSION_KEY = 'terminal-quest-session-v1';
 
   function defaultState() {
-    return { xp: 0, done: {}, hintsUsed: 0, cmdCount: 0, class: null, achievements: {}, usedCmds: [], muted: false, certified: false };
+    return { xp: 0, done: {}, hintsUsed: 0, cmdCount: 0, class: null, achievements: {}, usedCmds: [], muted: false, certified: false, lang: 'en' };
   }
 
   G.save = function () {
@@ -44,6 +44,7 @@
     }
     if (!G.state.done) G.state = defaultState();
     G.state = Object.assign(defaultState(), G.state); // fill fields added in later versions
+    if (CLIQ.i18n) CLIQ.i18n.lang = G.state.lang || 'en';
   };
 
   // ---- session save: full world + quest position, survives reload ----------
@@ -116,9 +117,9 @@
       }
     }
     if (G.currentQuest) {
-      term.print(`↻ Session restored — ${G.currentQuest.title}, task ${Math.min(G.taskIndex + 1, G.currentQuest.tasks.length)} of ${G.currentQuest.tasks.length}.`, 'term-success');
+      term.print(trf('↻ Session restored — {q}, task {i} of {n}.', { q: tr(G.currentQuest.title), i: Math.min(G.taskIndex + 1, G.currentQuest.tasks.length), n: G.currentQuest.tasks.length }), 'term-success');
     } else if (G.sandbox) {
-      term.print('↻ Session restored — Free Play.', 'term-success');
+      term.print(tr('↻ Session restored — Free Play.'), 'term-success');
     }
     if (sshEnded) term.print('☞ Your ssh session ended when the realm was restored — you are back on sanctum.', 'term-nudge');
     return true;
@@ -291,6 +292,8 @@
   function esc(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
+  const tr = (s) => (CLIQ.tr ? CLIQ.tr(s) : s);
+  const trf = (tpl, vars) => (CLIQ.trf ? CLIQ.trf(tpl, vars) : tpl);
 
   // ---- Terminal --------------------------------------------------------------
 
@@ -388,7 +391,7 @@
     const after = G.levelInfo();
     if (after.n > before) {
       if (CLIQ.sfx) CLIQ.sfx.play('levelup');
-      const lv = el('div', 'levelup-toast', `⬆ LEVEL UP! You are now a ${after.title}`);
+      const lv = el('div', 'levelup-toast', trf('⬆ LEVEL UP! You are now a {t}', { t: tr(after.title) }));
       document.body.appendChild(lv);
       setTimeout(() => lv.classList.add('show'), 10);
       setTimeout(() => { lv.classList.remove('show'); setTimeout(() => lv.remove(), 500); }, 3500);
@@ -398,8 +401,9 @@
   G.renderHUD = function () {
     const li = G.levelInfo();
     const cls = G.classDef();
-    $('#hud-level').textContent = `Lv ${li.n} · ${li.title}` + (cls ? ` · ${cls.icon} ${cls.name}` : '');
+    $('#hud-level').textContent = `Lv ${li.n} · ${tr(li.title)}` + (cls ? ` · ${cls.icon} ${tr(cls.name)}` : '');
     $('#sfx-btn').textContent = G.state.muted ? '🔇' : '🔊';
+    $('#lang-btn').textContent = (CLIQ.i18n && CLIQ.i18n.lang === 'th') ? 'EN' : 'ไทย';
     $('#hud-xp').textContent = li.max ? `${G.state.xp} XP (MAX)` : `${G.state.xp} XP`;
     $('#hud-bar-fill').style.width = (li.max ? 100 : Math.min(100, (li.cur / li.span) * 100)) + '%';
   };
@@ -420,8 +424,8 @@
       const head = el('div', 'module-head');
       head.appendChild(el('span', 'module-icon', mod.icon));
       const t = el('div', 'module-title');
-      t.appendChild(el('div', null, mod.title));
-      t.appendChild(el('div', 'module-sub', modLocked ? '🔒 defeat all realm bosses first' : `${done}/${mod.quests.length} quests`));
+      t.appendChild(el('div', null, tr(mod.title)));
+      t.appendChild(el('div', 'module-sub', modLocked ? tr('🔒 defeat all realm bosses first') : trf('{d}/{t} quests', { d: done, t: mod.quests.length })));
       head.appendChild(t);
       mDiv.appendChild(head);
       const list = el('div', 'quest-list');
@@ -430,7 +434,7 @@
         const locked = modLocked || (qi > 0 && !G.state.done[mod.quests[qi - 1].id] && !isDone);
         const item = el('div', 'quest-item' + (isDone ? ' done' : '') + (locked ? ' locked' : '') + (G.currentQuest === q ? ' active' : ''));
         item.appendChild(el('span', 'quest-status', isDone ? '✦' : locked ? '🔒' : q.boss ? '👑' : '▸'));
-        item.appendChild(el('span', null, q.title));
+        item.appendChild(el('span', null, tr(q.title)));
         if (!locked) item.addEventListener('click', () => G.startQuest(mod, q));
         list.appendChild(item);
       });
@@ -444,12 +448,13 @@
     const sbHead = el('div', 'module-head' + (G.sandbox ? ' active' : ''));
     sbHead.appendChild(el('span', 'module-icon', '🏖'));
     const sbT = el('div', 'module-title');
-    sbT.appendChild(el('div', null, 'Free Play'));
-    sbT.appendChild(el('div', 'module-sub', 'open terminal, everything unlocked'));
+    sbT.appendChild(el('div', null, tr('Free Play')));
+    sbT.appendChild(el('div', 'module-sub', tr('open terminal, everything unlocked')));
     sbHead.appendChild(sbT);
     sbHead.addEventListener('click', () => G.startSandbox());
     sb.appendChild(sbHead);
     nav.appendChild(sb);
+    $('#sidebar-title').textContent = tr('REALM MAP');
   };
 
   // ---- Quest engine --------------------------------------------------------------
@@ -496,12 +501,9 @@
     if (G.sandbox) { stage.endBattle(); return G.renderSandbox(panel); }
     if (!q) {
       stage.endBattle();
-      panel.appendChild(el('div', 'story-title', '⚔ Terminal Quest'));
+      panel.appendChild(el('div', 'story-title', tr('⚔ Terminal Quest')));
       const p = el('div', 'story-text');
-      p.innerHTML =
-        'You stand at the crossroads of nine realms, adventurer. ' +
-        '<b>Click a landmark on the world above</b> to journey there — or pick a quest from the realm list. ' +
-        'Type commands into the terminal below to cast your spells.';
+      p.innerHTML = tr('You stand at the crossroads of nine realms, adventurer. <b>Click a landmark on the world above</b> to journey there — or pick a quest from the realm list. Type commands into the terminal below to cast your spells.');
       panel.appendChild(p);
       return;
     }
@@ -511,15 +513,15 @@
       const left = Math.max(0, total - G.taskIndex);
       stage.battle(m, left / total, G.hearts, left === 0);
       const log = el('div', 'battle-log');
-      log.innerHTML = G.battleLog || m.name + ' draws near! ' + m.taunt;
+      log.innerHTML = G.battleLog || trf('{name} draws near! {taunt}', { name: tr(m.name), taunt: tr(m.taunt) });
       panel.appendChild(log);
     } else {
       stage.endBattle();
     }
-    panel.appendChild(el('div', 'story-crumb', `${G.currentModule.icon} ${G.currentModule.title}`));
-    panel.appendChild(el('div', 'story-title', (q.boss ? '👑 BOSS: ' : '') + q.title));
+    panel.appendChild(el('div', 'story-crumb', `${G.currentModule.icon} ${tr(G.currentModule.title)}`));
+    panel.appendChild(el('div', 'story-title', (q.boss ? tr('👑 BOSS: ') : '') + tr(q.title)));
     const story = el('div', 'story-text');
-    story.innerHTML = q.story;
+    story.innerHTML = tr(q.story);
     panel.appendChild(story);
 
     if (q.boss && !(CLIQ.battle && CLIQ.battle.isBattle(q))) {
@@ -537,24 +539,27 @@
     const task = G.currentTask();
     if (task) {
       const box = el('div', 'task-box');
-      box.appendChild(el('div', 'task-label', q.boss ? 'BOSS CHALLENGE' : `Task ${G.taskIndex + 1} of ${q.tasks.length}`));
+      box.appendChild(el('div', 'task-label', q.boss ? tr('BOSS CHALLENGE') : trf('Task {i} of {n}', { i: G.taskIndex + 1, n: q.tasks.length })));
       const tt = el('div', 'task-text');
-      tt.innerHTML = task.text;
+      tt.innerHTML = tr(task.text);
       box.appendChild(tt);
 
       if (task.quiz) {
+        const qq = el('div', 'quiz-question');
+        qq.innerHTML = tr(task.quiz.question);
+        box.appendChild(qq);
         const quizBox = el('div', 'quiz-box');
         task.quiz.choices.forEach((choice, i) => {
-          const btn = el('button', 'quiz-btn', choice);
+          const btn = el('button', 'quiz-btn', tr(choice));
           btn.addEventListener('click', () => G.answerQuiz(i, btn));
           quizBox.appendChild(btn);
         });
         box.appendChild(quizBox);
       } else if (task.hint) {
-        const hintBtn = el('button', 'hint-btn', '💡 Hint');
+        const hintBtn = el('button', 'hint-btn', tr('💡 Hint'));
         const hintText = el('div', 'hint-text');
         hintText.style.display = 'none';
-        hintText.innerHTML = task.hint;
+        hintText.innerHTML = tr(task.hint);
         hintBtn.addEventListener('click', () => {
           hintText.style.display = 'block';
           hintBtn.remove();
@@ -570,15 +575,15 @@
       panel.appendChild(G.renderCertificate());
     } else {
       const doneBox = el('div', 'task-box quest-complete');
-      doneBox.innerHTML = `<div class="task-label">QUEST COMPLETE</div><div class="task-text">${q.outro || 'Well fought, adventurer.'}</div>`;
+      doneBox.innerHTML = `<div class="task-label">${tr('QUEST COMPLETE')}</div><div class="task-text">${q.outro ? tr(q.outro) : tr('Well fought, adventurer.')}</div>`;
       panel.appendChild(doneBox);
       const next = G.nextQuest();
       if (next) {
-        const btn = el('button', 'next-btn', `Next quest: ${next.quest.title} ▸`);
+        const btn = el('button', 'next-btn', trf('Next quest: {t} ▸', { t: tr(next.quest.title) }));
         btn.addEventListener('click', () => G.startQuest(next.mod, next.quest));
         doneBox.appendChild(btn);
       } else {
-        doneBox.appendChild(el('div', 'task-text', '🏆 You have conquered every realm. The Archmage Trial awaits at the bottom of the map.'));
+        doneBox.appendChild(el('div', 'task-text', tr('🏆 You have conquered every realm. The Archmage Trial awaits at the bottom of the map.')));
       }
     }
     panel.scrollTop = 0;
@@ -596,9 +601,9 @@
   // ---- class select / sandbox / certificate / codex ------------------------
 
   G.renderClassSelect = function (panel) {
-    panel.appendChild(el('div', 'story-title', '⚔ Choose Your Class'));
+    panel.appendChild(el('div', 'story-title', tr('⚔ Choose Your Class')));
     const p = el('div', 'story-text');
-    p.innerHTML = 'Every hero walks their own path, adventurer. Your class grants <b>+10% XP</b> in its home realms — but all nine realms are yours to conquer.';
+    p.innerHTML = tr('Every hero walks their own path, adventurer. Your class grants <b>+10% XP</b> in its home realms — but all nine realms are yours to conquer.');
     panel.appendChild(p);
     const grid = el('div', 'class-grid');
     for (const cls of CLIQ.classDefs) {
@@ -607,8 +612,8 @@
       cv.className = 'pixel-sprite';
       CLIQ.drawSprite(cv, CLIQ.heroSprite(cls.id), 5);
       card.appendChild(cv);
-      card.appendChild(el('div', 'class-name', `${cls.icon} ${cls.name}`));
-      card.appendChild(el('div', 'class-desc', cls.desc));
+      card.appendChild(el('div', 'class-name', `${cls.icon} ${tr(cls.name)}`));
+      card.appendChild(el('div', 'class-desc', tr(cls.desc)));
       card.addEventListener('click', () => {
         G.state.class = cls.id;
         G.save();
@@ -639,7 +644,7 @@
   };
 
   G.renderSandbox = function (panel) {
-    panel.appendChild(el('div', 'story-title', '🏖 Free Play — The Open Realm'));
+    panel.appendChild(el('div', 'story-title', tr('🏖 Free Play — The Open Realm')));
     const p = el('div', 'story-text');
     p.innerHTML =
       'No quests, no judges — just you and the terminal. Everything is unlocked:<br><br>' +
@@ -648,13 +653,13 @@
       '· <code>git</code>, <code>docker</code>, and the whole spellbook (📖 in the top bar) are at your service<br><br>' +
       'Break things freely — the reset button below restores the world (your XP is safe).';
     panel.appendChild(p);
-    const btn = el('button', 'next-btn', '♻ Reset the world');
+    const btn = el('button', 'next-btn', tr('♻ Reset the world'));
     btn.addEventListener('click', () => {
       G.world = CLIQ.makeWorld();
       G.world.azure.loggedIn = true;
       G.world.kubeConnected = true;
       term.updatePrompt();
-      term.print('♻ The world reforms around you, fresh and unbroken.', 'term-success');
+      term.print(tr('♻ The world reforms around you, fresh and unbroken.'), 'term-success');
     });
     panel.appendChild(btn);
   };
@@ -738,7 +743,7 @@
     }
     const questJustDone = G.taskIndex >= q.tasks.length;
     if (questJustDone) {
-      if (inBattle) G.battleLog = '🏆 VICTORY! The beast dissolves into well-behaved processes!';
+      if (inBattle) G.battleLog = tr('🏆 VICTORY! The beast dissolves into well-behaved processes!');
       if (!G.state.done[q.id]) {
         G.state.done[q.id] = true;
         G.addXP(q.boss ? 60 : 25, q.boss ? 'boss defeated' : 'quest complete');
@@ -770,8 +775,8 @@
     const inBattle = CLIQ.battle && CLIQ.battle.isBattle(G.currentQuest);
     if (choiceIdx === task.quiz.answer) {
       btn.classList.add('correct');
-      term.print('✔ ' + (task.quiz.explain || 'Correct!'), 'term-success');
-      if (inBattle) G.battleLog = '✨ Your wisdom strikes true! The beast reels!';
+      term.print('✔ ' + (task.quiz.explain ? tr(task.quiz.explain) : 'Correct!'), 'term-success');
+      if (inBattle) G.battleLog = tr('✨ Your wisdom strikes true! The beast reels!');
       setTimeout(() => {
         G.completeTask();
         if (inBattle) CLIQ.battle.animate('enemy');
@@ -783,8 +788,8 @@
       if (G.currentQuest.boss) {
         G.hearts--;
         if (G.hearts <= 0) {
-          term.print('☠ The boss overwhelms you! You gather your strength and the battle restarts...', 'term-err');
-          if (inBattle) G.battleLog = '☠ You have fallen... but heroes rise again. The battle restarts!';
+          term.print(tr('☠ The boss overwhelms you! You gather your strength and the battle restarts...'), 'term-err');
+          if (inBattle) G.battleLog = tr('☠ You have fallen... but heroes rise again. The battle restarts!');
           G.hearts = 3;
           G.taskIndex = 0;
           if (G.currentQuest.setup) G.currentQuest.setup(G.world);
@@ -794,9 +799,9 @@
           }, 600);
           return;
         }
-        if (inBattle) G.battleLog = '💥 The enemy counterattacks! You lose a heart!';
+        if (inBattle) G.battleLog = tr('💥 The enemy counterattacks! You lose a heart!');
       }
-      term.print('✘ Not quite. ' + (task.quiz.explainWrong || 'Think again and try another answer.'), 'term-err');
+      term.print(tr('✘ Not quite. ') + (task.quiz.explainWrong ? tr(task.quiz.explainWrong) : tr('Think again and try another answer.')), 'term-err');
       G.renderStory(); // re-render to update hearts (keeps disabled state lost — acceptable)
       if (inBattle && G.currentQuest.boss) CLIQ.battle.animate('hero');
       G.saveSession();
@@ -821,8 +826,8 @@
     }
     if (result) {
       const inBattle = CLIQ.battle && CLIQ.battle.isBattle(G.currentQuest);
-      if (inBattle) G.battleLog = '⚔ You cast `' + (e.cmd || 'a spell') + '` — a mighty blow!';
-      G.completeTask(typeof result === 'string' ? result : task.success || 'Well done.');
+      if (inBattle) G.battleLog = trf('⚔ You cast `{cmd}` — a mighty blow!', { cmd: e.cmd || '?' });
+      G.completeTask(tr(typeof result === 'string' ? result : task.success || 'Well done.'));
       if (inBattle) CLIQ.battle.animate('enemy');
     } else if (task.nudge) {
       const n = task.nudge(e);
@@ -849,6 +854,16 @@
       G.save();
       G.renderHUD();
       if (CLIQ.sfx) CLIQ.sfx.play('click');
+    });
+    $('#lang-btn').addEventListener('click', () => {
+      CLIQ.i18n.lang = CLIQ.i18n.lang === 'th' ? 'en' : 'th';
+      G.state.lang = CLIQ.i18n.lang;
+      G.save();
+      if (CLIQ.sfx) CLIQ.sfx.play('click');
+      G.renderHUD();
+      G.renderSidebar();
+      G.renderStory();
+      term.print(CLIQ.i18n.lang === 'th' ? '🇹🇭 เปลี่ยนเป็นภาษาไทยแล้ว — คำสั่งยังคงเป็นภาษาอังกฤษ เพราะนั่นคือทักษะจริง!' : '🇬🇧 Switched to English.', 'term-success');
     });
     $('#save-btn').addEventListener('click', () => G.toggleSaveMenu());
     $('#import-file').addEventListener('change', (ev) => {
