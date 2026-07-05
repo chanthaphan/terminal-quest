@@ -121,6 +121,24 @@ body {
 /* ---- main column ---- */
 #layout-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
 
+/* Draggable divider between the stage and the terminal */
+#stage-resize {
+  flex: 0 0 8px;
+  cursor: row-resize;
+  background: var(--panel2);
+  position: relative;
+  z-index: 30;
+  touch-action: none;
+}
+#stage-resize::before {
+  content: '';
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 46px; height: 4px; border-radius: 2px;
+  background: rgba(223, 230, 255, 0.35);
+}
+#stage-resize:hover, #stage-resize.dragging { background: var(--purple); }
+#stage-resize:hover::before, #stage-resize.dragging::before { background: rgba(255, 255, 255, 0.7); }
+
 /* ---- HD-2D stage ---- */
 #stage {
   flex: 0 0 58%;
@@ -235,6 +253,28 @@ body {
 .actor-enemy.dissolve .ground-shadow { animation: fadeout 1.4s ease forwards; }
 
 /* fx layer */
+/* WebGL HD-2D stage (js/stage3d): canvas replaces the CSS scene; DOM overlay
+   (fx, plates, dialog, vignette, scanlines) still stacks above it. */
+.stage3d-canvas { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; }
+.stage-3d .scene-layers, .stage-3d .actor { display: none !important; }
+/* the WebGL composite pass draws its own vignette + scanlines */
+.stage-3d .stage-vignette, .stage-3d .stage-scanlines { display: none !important; }
+
+/* overworld landmark markers (projected over the WebGL map) */
+.world-markers { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.world-mark {
+  position: absolute; transform: translate(-50%, -120%);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  pointer-events: auto; cursor: pointer; user-select: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  transition: transform 0.12s ease;
+}
+.world-mark:hover { transform: translate(-50%, -128%) scale(1.12); }
+.world-mark .wm-icon { font-size: 26px; line-height: 1; }
+.world-mark .wm-flag { font-size: 13px; line-height: 1; height: 14px; }
+.world-mark.wm-locked { cursor: not-allowed; filter: grayscale(0.8) brightness(0.7) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7)); }
+.world-mark.wm-done .wm-flag { color: #ffd76a; }
+
 .stage-fx { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
 .spark {
   position: absolute; width: 5px; height: 5px; border-radius: 50%;
@@ -475,7 +515,7 @@ body {
 /* FF dialog box */
 .dialog-box {
   position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 10;
-  max-height: 52%;
+  max-height: 44%;
   background: linear-gradient(180deg, rgba(23, 33, 74, 0.94), rgba(13, 20, 48, 0.94));
   border: 2px solid #dfe6ff;
   border-radius: 10px;
@@ -858,5 +898,5 @@ body {
   }
   #sidebar.open { transform: none; }
   #stage { flex-basis: 56%; }
-  .dialog-box { max-height: 62%; }
+  .dialog-box { max-height: 48%; }
 }

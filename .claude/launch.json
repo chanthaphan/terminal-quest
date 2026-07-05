@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "terminal-quest",
+      "name": "web",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "web"],
-      "port": 4173
+      "runtimeArgs": [".claude/devserver.py", "8124"],
+      "port": 8124
     }
   ]
 }
