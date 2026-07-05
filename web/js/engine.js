@@ -12,6 +12,7 @@
     { xp: 1200, title: 'Cloud Knight' },
     { xp: 1600, title: 'Kube Warden' },
     { xp: 2100, title: 'Cloud Archmage' },
+    { xp: 2800, title: 'Legend of the Nine Realms' },
   ];
 
   const G = (CLIQ.game = {
@@ -566,6 +567,28 @@
           G.state.hintsUsed++;
           G.questHints = (G.questHints || 0) + 1;
           G.save();
+          if (q.hardcore) {
+            // In the Void, knowledge has a price: each hint costs a heart.
+            G.hearts--;
+            if (CLIQ.sfx) CLIQ.sfx.play('hurt');
+            term.print(tr('🩸 The Void feeds on your hesitation — that hint cost a heart!'), 'term-err');
+            const inBattle = CLIQ.battle && CLIQ.battle.isBattle(q);
+            if (G.hearts <= 0) {
+              term.print(tr('☠ The boss overwhelms you! You gather your strength and the battle restarts...'), 'term-err');
+              if (inBattle) G.battleLog = tr('☠ You have fallen... but heroes rise again. The battle restarts!');
+              G.hearts = 3;
+              G.taskIndex = 0;
+              if (q.setup) q.setup(G.world);
+              setTimeout(() => G.renderStory(), 600);
+            } else if (inBattle) {
+              // update the hearts on the HP plate without re-rendering (the paid hint must stay visible)
+              const m = CLIQ.battle.meta[q.id];
+              const total = q.tasks.length;
+              CLIQ.stage.battle(m, Math.max(0, total - G.taskIndex) / total, G.hearts, false);
+              CLIQ.stage.strike('hero');
+            }
+            G.saveSession();
+          }
         });
         box.appendChild(hintBtn);
         box.appendChild(hintText);

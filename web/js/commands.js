@@ -404,6 +404,14 @@
 
   function resolveName(w, name) {
     if (/^\d+\.\d+\.\d+\.\d+$/.test(name)) return name;
+    // /etc/hosts is consulted BEFORE DNS — just like the real resolver
+    const hosts = getNode(w, '/etc/hosts');
+    if (hosts && hosts.type === 'file') {
+      for (const line of hosts.content.split('\n')) {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 2 && parts.slice(1).includes(name) && /^\d+\.\d+\.\d+\.\d+$/.test(parts[0])) return parts[0];
+      }
+    }
     return w.net.dns[name] || null;
   }
   function hostByName(w, name) {
@@ -487,11 +495,12 @@
       if (f.has('I')) return ok('HTTP/1.1 200 OK\nServer: ' + c.image + '\n');
       return ok(body + '\n');
     }
+    // resolution happens before any HTTP conversation — a broken name fails here
+    const hostPart = url.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+    if (!resolveName(w, hostPart)) return err(`curl: (6) Could not resolve host: ${hostPart}\n`);
     let entry = w.net.http[url] || w.net.http[url + '/'];
     while (entry && entry.alias) entry = w.net.http[entry.alias];
     if (!entry) {
-      const hostPart = url.replace(/^https?:\/\//, '').split('/')[0];
-      if (!resolveName(w, hostPart)) return err(`curl: (6) Could not resolve host: ${hostPart}\n`);
       return err(`curl: (7) Failed to connect to ${hostPart}: Connection refused\n`);
     }
     if (entry.dynamic === 'web01') {

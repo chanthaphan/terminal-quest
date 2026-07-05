@@ -17,6 +17,7 @@ into a fully simulated terminal.
 | 🐳 The Container Foundry | docker | pull/run/ps/stop/rm lifecycle, logs/exec debugging, Dockerfile builds & layer caching, `-p` port publishing |
 | ⚗️ The Alchemist's Lab | processes & ops | ps/top/kill + signals, df/du disk triage, awk/sed text alchemy, tar backups, cron |
 | 👑 The Archmage Trial | final exam | a 13-task gauntlet across ALL realms, unlocked only after every boss falls — victory grants a printable **Certificate of Ascension** with confetti |
+| 🌀 The Void Gate | post-game superboss | **THE AMALGAM** — all nine bosses fused into one 19-stage cascading outage: dead DNS (patched live via `/etc/hosts`, which really works), an nginx whose logs point to a dead database two ssh-hops deep, a poisoned deployment, a rampaging daemon, a full disk, a crashed container — then the runbook committed to git and archived in Azure. **Hardcore: hints cost hearts.** Victory crowns you *Legend of the Nine Realms* |
 
 ## Character classes
 

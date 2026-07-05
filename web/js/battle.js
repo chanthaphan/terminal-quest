@@ -14,6 +14,7 @@
       'docker-boss': { sprite: 'golem', name: 'THE IMAGE GOLEM', scale: 9, taunt: 'Exit code 1! Forever 1!' },
       'ops-boss': { sprite: 'daemon', name: 'THE RUNAWAY DAEMON', scale: 9, taunt: '97% CPU and climbing!' },
       'final-boss': { sprite: 'archlich', name: 'ARCHLICH OF LEGACY SYSTEMS', scale: 8, taunt: 'None have ever passed my Trial!' },
+      'void-boss': { sprite: 'amalgam', name: 'THE AMALGAM', scale: 8, taunt: 'Nine deaths made me. One hero ends here!' },
     },
 
     isBattle(quest) {

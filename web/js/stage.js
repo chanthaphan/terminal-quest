@@ -131,6 +131,24 @@
       glows: [{ x: '50%', y: '30%', size: 340, color: 'rgba(200,130,255,0.45)', flicker: true }, { x: '50%', y: '70%', size: 300, color: 'rgba(255,215,100,0.28)' }],
       particles: 'motes',
     },
+    void: {
+      sky: 'linear-gradient(180deg,#020208 0%,#12061e 55%,#2a0a2e 100%)',
+      ground: 'linear-gradient(180deg,#1c0a24,#08030c)',
+      celestial: { x: '50%', y: '18%', size: 66, color: '#12061e', glow: 'rgba(190,60,255,0.55)' },
+      props: [
+        { layer: 'far', css: 'left:8%;bottom:38%;width:16%;height:9%;background:#1a0c2a;clip-path:polygon(0 40%,15% 0,85% 0,100% 40%,70% 100%,30% 100%)' },
+        { layer: 'far', css: 'right:14%;bottom:52%;width:12%;height:7%;background:#160a24;clip-path:polygon(0 40%,15% 0,85% 0,100% 40%,70% 100%,30% 100%)' },
+        { layer: 'mid', css: 'left:34%;bottom:46%;width:9%;height:6%;background:#241038;clip-path:polygon(0 40%,15% 0,85% 0,100% 40%,70% 100%,30% 100%)' },
+        { layer: 'mid', css: 'left:4%;bottom:0;width:8%;height:64%;background:#1c0c30;clip-path:polygon(20% 100%,35% 0,65% 0,80% 100%)' },
+        { layer: 'mid', css: 'right:4%;bottom:0;width:8%;height:64%;background:#1c0c30;clip-path:polygon(20% 100%,35% 0,65% 0,80% 100%)' },
+      ],
+      glows: [
+        { x: '50%', y: '18%', size: 320, color: 'rgba(190,60,255,0.35)', flicker: true },
+        { x: '20%', y: '70%', size: 220, color: 'rgba(255,60,60,0.22)', flicker: true },
+        { x: '80%', y: '70%', size: 220, color: 'rgba(60,220,160,0.18)', flicker: true },
+      ],
+      particles: 'fireflies',
+    },
     sandbox: {
       sky: 'linear-gradient(180deg,#12295e 0%,#2e5f9e 45%,#e8955e 85%,#f0b06a 100%)',
       ground: 'linear-gradient(180deg,#1d4668,#0d2438)',
@@ -160,7 +178,7 @@
 
   // ---- overworld landmark positions (left %, in module order) ----------------
 
-  const LANDMARK_X = { bash: 8, remote: 18, concepts: 28, azure: 38, k8s: 48, git: 58, docker: 68, ops: 78, final: 89 };
+  const LANDMARK_X = { bash: 7, remote: 16, concepts: 25, azure: 34, k8s: 43, git: 52, docker: 61, ops: 70, final: 81, void: 92 };
 
   // ---- stage ------------------------------------------------------------------
 

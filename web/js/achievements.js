@@ -20,6 +20,8 @@
     { id: 'realm-docker', icon: '🐳', title: 'Foundry Master', desc: 'Defeat the Image Golem', test: (s, e) => e.type === 'quest' && e.questId === 'docker-boss' },
     { id: 'realm-ops', icon: '⚗️', title: 'Daemon Slayer', desc: 'Defeat the Runaway Daemon', test: (s, e) => e.type === 'quest' && e.questId === 'ops-boss' },
     { id: 'archmage', icon: '👑', title: 'Cloud Archmage', desc: 'Pass the Archmage Trial', test: (s, e) => e.type === 'quest' && e.questId === 'final-boss' },
+    { id: 'voidslayer', icon: '🌀', title: 'Void Slayer', desc: 'Destroy the Amalgam beyond the Void Gate', test: (s, e) => e.type === 'quest' && e.questId === 'void-boss' },
+    { id: 'void-flawless', icon: '💠', title: 'Untouchable Legend', desc: 'Conquer the Void Gate without losing a single heart', test: (s, e) => e.type === 'quest' && e.questId === 'void-boss' && e.hearts === 3 },
   ];
 
   CLIQ.checkAchievements = function (event) {

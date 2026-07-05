@@ -48,7 +48,8 @@
     const sub = a[0];
 
     if (sub === 'init') {
-      if (g.initialized) return ok(`Reinitialized existing Git repository in ${g.root}/.git/\n`);
+      if (g.initialized && CLIQ.normalize(w, w.cwd) === g.root) return ok(`Reinitialized existing Git repository in ${g.root}/.git/\n`);
+      // initializing in a different directory starts a fresh repository there
       g.initialized = true;
       g.root = CLIQ.normalize(w, w.cwd);
       g.branch = 'main';

@@ -222,6 +222,32 @@
     ],
   };
 
+  CLIQ.sprites.amalgam = {
+    palette: {
+      P: '#7c3aed', p: '#4c1d95', R: '#ef4444', Y: '#facc15', C: '#67e8f9',
+      G: '#22c55e', W: '#f8fafc', B: '#0a0a0f', O: '#fb923c',
+    },
+    px: [
+      '.....YY....YY.....',
+      '....YPPPPPPPPY....',
+      '...PPPPPPPPPPPP...',
+      '..PPWRWPPPPWCWPP..',
+      '..PPRRRPPPPCCCPP..',
+      '..PPWRWPPPPWCWPP..',
+      '..PPPPPWYWPPPPPP..',
+      '..PPPPWYYYWPPPPP..',
+      '.GPPPPPWYWPPPPPG..',
+      '.GGPPBBBBBBBPPGG..',
+      '..PPPBWBWBWBPPP...',
+      '..PPPPBBBBBBPPPP..',
+      '..OPpPPPPPPPPpO...',
+      '..O.pPPPPPPPPp.O..',
+      '..O..pp.PP.pp..O..',
+      '.OO...G.PP.G...OO.',
+      '......G....G......',
+    ],
+  };
+
   // ---- RPG character classes (hero palette tints) ----
 
   CLIQ.classDefs = [
