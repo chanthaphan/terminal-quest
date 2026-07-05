@@ -43,6 +43,10 @@ const COMPOSITE_FS = `
     float d = length((vUv - 0.5) * vec2(uAspect, 1.0));         // vignette
     col *= 1.0 - smoothstep(0.5, 0.95, d) * uVignette;
     col *= 1.0 - uScan * (0.5 + 0.5 * sin(vUv.y * uScanLines)); // scanlines
+    // The scene was lit in linear space into an off-screen target, which skips
+    // three's automatic output conversion — encode to sRGB here or everything
+    // dark crushes to black (torches and sprites were the only visible things).
+    col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
     gl_FragColor = vec4(col, 1.0);
   }`;
 

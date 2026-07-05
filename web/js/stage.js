@@ -237,9 +237,10 @@
     },
 
     drawHero(scale) {
-      if (this.heroScale === scale && this._heroDrawnClass === this.heroClass) return;
+      const sig = this.heroClass + '|' + (CLIQ.gearSig ? CLIQ.gearSig() : '');
+      if (this.heroScale === scale && this._heroDrawnSig === sig) return;
       this.heroScale = scale;
-      this._heroDrawnClass = this.heroClass;
+      this._heroDrawnSig = sig;
       this.drawActor(this.els.hero, CLIQ.heroSprite(this.heroClass), scale);
     },
 
@@ -427,8 +428,9 @@
       }
       E.plates.hidden = false;
       E.plates.querySelector('.enemy-fill').style.width = Math.round(enemyPct * 100) + '%';
-      E.plates.querySelector('.hero-fill').style.width = Math.round((hearts / 3) * 100) + '%';
-      E.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(3 - hearts);
+      const maxH = (CLIQ.game && CLIQ.game.maxHearts) ? CLIQ.game.maxHearts() : 3;
+      E.plates.querySelector('.hero-fill').style.width = Math.round((hearts / maxH) * 100) + '%';
+      E.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(Math.max(0, maxH - hearts));
       if (won && !this.dissolved) {
         this.dissolved = true;
         E.enemy.classList.add('dissolve');

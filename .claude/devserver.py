@@ -6,6 +6,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 
 class NoCacheHandler(SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"  # keep-alive: survives the game's 30-file load burst
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")

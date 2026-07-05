@@ -125,11 +125,33 @@ export function spriteTexture(sprite) {
   return tex;
 }
 
+// A closed-eyes blink frame: in the given rows, eye pixels (E/W cells that sit
+// between skin) become skin-shade "lids". Outline E cells are left alone.
+export function blinkVariant(sprite) {
+  if (!sprite.blinkRows) return null;
+  const px = sprite.px.map((r) => r.split(''));
+  for (const ri of sprite.blinkRows) {
+    const row = px[ri];
+    if (!row) continue;
+    for (let c = 1; c < row.length - 1; c++) {
+      if (row[c] !== 'E' && row[c] !== 'W') continue;
+      // interior eye pixels have skin within 3 cells on BOTH sides; the face
+      // outline doesn't, so it survives the blink
+      const skin = (arr) => arr.some((ch) => ch === 'F' || ch === 'f');
+      const leftSkin = skin(row.slice(Math.max(0, c - 3), c));
+      const rightSkin = skin(row.slice(c + 1, c + 4));
+      if (leftSkin && rightSkin) row[c] = 'f';
+    }
+  }
+  return spriteTexture({ px: px.map((r) => r.join('')), palette: sprite.palette });
+}
+
 // A hero "walk" variant: shift the bottom rows ±1px to fake a stride.
 export function walkVariant(sprite) {
   const rows = sprite.px.slice();
   const h = rows.length;
-  for (let y = h - 4; y < h; y++) {
+  const legs = Math.max(4, Math.round(h * 0.2)); // scale with sprite resolution
+  for (let y = h - legs; y < h; y++) {
     const r = rows[y];
     if (!r) continue;
     rows[y] = (y % 2 ? ' ' + r : r.slice(1) + ' ');
@@ -146,6 +168,37 @@ export function glowTexture(inner = 'rgba(255,255,255,1)', outer = 'rgba(255,255
   const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
   g.addColorStop(0, inner); g.addColorStop(1, outer);
   ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+  return makeTexture(cv);
+}
+
+// ---- magic rune circle (casting FX) ----------------------------------------
+// White strokes on transparent; tinted per-spell via material color.
+export function runeTexture(size = 256) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const ctx = cv.getContext('2d');
+  const c = size / 2;
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.arc(c, c, c - 12, 0, 7); ctx.stroke();
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(c, c, c - 46, 0, 7); ctx.stroke();
+  ctx.lineWidth = 6;
+  for (let i = 0; i < 16; i++) { // radial ticks between the rings
+    const a = (i / 16) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(c + Math.cos(a) * (c - 42), c + Math.sin(a) * (c - 42));
+    ctx.lineTo(c + Math.cos(a) * (c - 18), c + Math.sin(a) * (c - 18));
+    ctx.stroke();
+  }
+  ctx.lineWidth = 5;
+  for (let i = 0; i < 4; i++) { // diamond glyphs
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const x = c + Math.cos(a) * (c - 70), y = c + Math.sin(a) * (c - 70);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 14); ctx.lineTo(x + 14, y); ctx.lineTo(x, y + 14); ctx.lineTo(x - 14, y);
+    ctx.closePath(); ctx.stroke();
+  }
   return makeTexture(cv);
 }
 

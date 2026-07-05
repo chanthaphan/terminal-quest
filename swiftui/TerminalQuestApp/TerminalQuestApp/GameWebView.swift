@@ -16,6 +16,12 @@ struct GameWebView: UIViewRepresentable {
         // Persistent store: localStorage saves survive relaunches and re-deploys
         // (only deleting the app wipes them).
         config.websiteDataStore = .default()
+        // The WebGL renderer is loaded as ES modules; under file:// those fetches
+        // are blocked by CORS (null origin) and the game silently falls back to
+        // the CSS stage. These WebKit switches allow same-file-origin module
+        // loading for the bundled app.
+        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.isOpaque = false

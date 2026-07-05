@@ -16,8 +16,15 @@ import * as THREE from 'three';
 import { themeFor } from './themes3d.js';
 import { SceneBundle } from './scenebuilder.js';
 import { Actor, disposeSharedSpriteAssets } from './sprites3d.js';
-import { WorldScene, landmarkX } from './overworld3d.js';
+import { WorldScene, landmarkX, setSpread, pathStartX } from './overworld3d.js';
 import { PostPipeline } from './post.js';
+import { runeTexture } from './texgen.js';
+
+// spell-circle tint per command effect kind
+const MAGIC_COLORS = {
+  scan: '#67e8f9', read: '#facc15', conjure: '#8ab4ff', write: '#fcd34d',
+  transform: '#c084fc', slash: '#ff5a5a', step: '#a3e635', portal: '#5eead4',
+};
 
 const qs = new URLSearchParams(location.search);
 
@@ -34,11 +41,23 @@ function reducedMotion() {
 
 // Diorama framing: camera pulled back and tilted down so actors stand in the
 // upper band of the stage, above the dialog box (which covers the lower ~46%).
-const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5 };
+// Portrait/narrow stages (phones) get a wider FOV, a further camera and actors
+// pulled toward center so the hero and the lit props stay in frame.
+const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 28 };
+const CAM_NARROW = { x: 0, y: 3.2, z: 12.5, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 34 };
+// Stacked layout (≤860px: the dialog sits BELOW the scene, so the whole frame is
+// visible): tilt up and drop the hero low in frame — background fills the shot
+// instead of empty foreground floor.
+const CAM_STACKED = { x: 0, y: 2.1, z: 9.5, lookX: 0, lookY: 1.85, lookZ: -2.5, fov: 28 };
+const CAM_STACKED_NARROW = { x: 0, y: 2.1, z: 11, lookX: 0, lookY: 1.85, lookZ: -2.5, fov: 34 };
+const stackedLayout = () => window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
 // Overworld framing: higher and wider to take in the winding path of landmarks.
-const WORLD_CAM = { x: 0, y: 7.5, z: 18, lookX: 0, lookY: 0.5, lookZ: -5 };
+const WORLD_CAM = { x: 0, y: 8.2, z: 21, lookX: 0, lookY: 0.5, lookZ: -5, fov: 28 };
+const WORLD_CAM_NARROW = { x: 0, y: 9, z: 26, lookX: 0, lookY: 0.5, lookZ: -5, fov: 40 };
 const HERO_POS = [1.8, 0, -2.0];
 const ENEMY_POS = [-1.9, 0, -2.0];
+const HERO_X_NARROW = 1.2;
+const ENEMY_X_NARROW = -1.45;
 
 class Stage3D {
   constructor(domStage) {
@@ -98,6 +117,13 @@ class Stage3D {
       this.camera.lookAt(CAM.lookX, CAM.lookY, CAM.lookZ);
       this.clock = new THREE.Clock();
 
+      // magic casting FX: pooled rune circles + reusable flash lights
+      this._mfx = [];
+      this._runeTex = runeTexture();
+      this._circlePool = [];
+      this._flashes = [0, 1].map(() => { const l = new THREE.PointLight(0xffffff, 0, 10); this.scene.add(l); return l; });
+      this._flashIdx = 0;
+
       // post-processing (bloom + tilt-shift + grade); ?post=off disables it
       this._postOn = qs.get('post') !== 'off';
       if (this._postOn) {
@@ -108,7 +134,9 @@ class Stage3D {
 
       this._resize();
       this._ro = new ResizeObserver(() => this._resize());
-      this._ro.observe(root);
+      // observe the viewport, not #stage: on phones the dialog stacks below the
+      // scene inside #stage, so the drawable area changes when dialog content does
+      this._ro.observe(this.els.viewport);
 
       this._onVis = () => { document.hidden ? this._stop() : this._start(); };
       document.addEventListener('visibilitychange', this._onVis);
@@ -129,8 +157,36 @@ class Stage3D {
     const h = this.els.viewport.clientHeight || 1;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this._narrow = this.camera.aspect < 0.95; // portrait-ish (phones)
+    this._applyView();
     if (this.post) this.post.setSize();
+  }
+
+  // Picks the camera framing for the current scene + aspect and repositions the
+  // actors so they stay in frame on narrow screens.
+  _applyView() {
+    const world = this.sceneId === 'world';
+    if (world) {
+      // Solve the camera distance so the outermost landmarks (at ±0.42·spread)
+      // project inside the frame at any aspect. 0.94 ≈ pitch correction; +1.3
+      // world units of icon margin; landmarks sit around z ≈ -7.
+      const fov = this._narrow ? 40 : 28;
+      const spread = this._narrow ? 19 : 30;
+      const edge = 0.42 * spread + 1.3;
+      const z = Math.max(16, edge / (0.94 * Math.tan((fov * Math.PI) / 360) * this.camera.aspect) - 7);
+      this._view = { x: 0, y: 8.2 * (z / 21), z, lookX: 0, lookY: 0.5, lookZ: -5, fov };
+    } else if (stackedLayout()) {
+      this._view = this._narrow ? CAM_STACKED_NARROW : CAM_STACKED;
+    } else {
+      this._view = this._narrow ? CAM_NARROW : CAM;
+    }
+    this.camera.fov = this._view.fov;
+    this.camera.updateProjectionMatrix();
+    if (!world && !this.traveling) {
+      const hx = this._narrow ? HERO_X_NARROW : HERO_POS[0];
+      if (this.hero) this.hero.group.position.x = hx;
+      if (this.enemy) this.enemy.group.position.x = this._narrow ? ENEMY_X_NARROW : ENEMY_POS[0];
+    }
   }
 
   _start() {
@@ -187,6 +243,7 @@ class Stage3D {
   _frame() {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.elapsedTime;
+    if (this._mfx && this._mfx.length) this._mfxTick(dt);
     if (this.bundle) this.bundle.update(dt, t);
     if (this.world) this.world.update(dt, t);
     if (this.hero) this.hero.update(dt, this.camera);
@@ -246,12 +303,86 @@ class Stage3D {
   }
   cameraShake(ms) { this._shakeUntil = this.clock.elapsedTime + ms / 1000; }
 
+  // ---- magic casting FX ------------------------------------------------------
+  // A glowing rune circle blooms under the caster while a point light flashes —
+  // every command reads as a cast spell.
+  magicCircle(color, actor, size = 1.6, dur = 0.9) {
+    if (!this.renderer || !actor) return;
+    let m = this._circlePool.pop();
+    if (!m) {
+      const mat = new THREE.MeshBasicMaterial({
+        map: this._runeTex, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      });
+      m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      m.renderOrder = 1;
+    }
+    // camera-facing ellipse at the feet — reads as a ground circle from any
+    // camera pitch (a flat plane is invisible edge-on at the low stacked camera)
+    const p = actor.group.position;
+    m.position.set(p.x, 0.16, p.z + 0.3);
+    m.material.color.set(color);
+    this.scene.add(m);
+    this._mfx.push({ kind: 'circle', m, t0: this.clock.elapsedTime, dur, size, spin: 0 });
+  }
+
+  flashAt(color, actor, intensity = 1.8, dur = 0.45) {
+    if (!this.renderer || !actor) return;
+    const l = this._flashes[this._flashIdx++ % this._flashes.length];
+    const p = actor.group.position;
+    l.position.set(p.x, 1.6, p.z + 0.6);
+    l.color.set(color);
+    this._mfx.push({ kind: 'light', l, t0: this.clock.elapsedTime, dur, i0: intensity });
+  }
+
+  _mfxTick(dt) {
+    const t = this.clock.elapsedTime;
+    for (let i = this._mfx.length - 1; i >= 0; i--) {
+      const f = this._mfx[i];
+      const k = (t - f.t0) / f.dur;
+      if (f.kind === 'circle') {
+        if (k >= 1) {
+          this.scene.remove(f.m);
+          this._circlePool.push(f.m);
+          this._mfx.splice(i, 1);
+        } else {
+          f.m.material.opacity = Math.sin(k * Math.PI) * 0.85;
+          const s = f.size * (0.55 + 0.6 * k);
+          f.spin += dt * 2.2;
+          // tilt back from the camera so the ring reads as lying at the feet,
+          // then spin around its own normal
+          f.m.quaternion.copy(this.camera.quaternion);
+          f.m.rotateX(-1.15);
+          f.m.rotateZ(f.spin);
+          f.m.scale.set(s, s, s);
+        }
+      } else { // light
+        if (k >= 1) { f.l.intensity = 0; this._mfx.splice(i, 1); }
+        else f.l.intensity = f.i0 * (1 - k);
+      }
+    }
+  }
+
   // ---- scene ---------------------------------------------------------------
+  _heroSig() {
+    return this.heroClass + '|' + (window.CLIQ.gearSig ? window.CLIQ.gearSig() : '');
+  }
+
   _ensureHero() {
+    // rebuild when the class tint or the equipped conquest gear changes,
+    // keeping the actor exactly where it stood
+    let keepPos = null, keepScale = null;
+    if (this.hero && this._heroBuiltSig !== this._heroSig()) {
+      keepPos = this.hero.group.position.clone();
+      keepScale = this.hero.scale;
+      this.scene.remove(this.hero.group); this.hero.dispose(); this.hero = null;
+    }
     if (this.hero) return;
-    this.hero = new Actor(window.CLIQ.heroSprite(this.heroClass), this.heroScale || 7, true);
-    this.hero.setPosition(HERO_POS[0], HERO_POS[1], HERO_POS[2]);
+    this.hero = new Actor(window.CLIQ.heroSprite(this.heroClass), keepScale || this.heroScale || 7, true);
+    if (keepPos) this.hero.group.position.copy(keepPos);
+    else this.hero.setPosition(HERO_POS[0], HERO_POS[1], HERO_POS[2]);
     this.scene.add(this.hero.group);
+    this._heroBuiltSig = this._heroSig();
   }
 
   _disposeScenery() {
@@ -267,27 +398,28 @@ class Stage3D {
     this.bundle = new SceneBundle(theme);
     this.scene.add(this.bundle.group);
     if (this.post) this.post.setGrade(theme.grade);
-    this._view = CAM;
     this.sceneId = id;
     this._ensureHero();
     this.hero.setScale(7);
-    this.hero.setPosition(HERO_POS[0], 0, HERO_POS[2]);
+    this.hero.setPosition(this._narrow ? HERO_X_NARROW : HERO_POS[0], 0, HERO_POS[2]);
     this.scene.add(this.hero.group);
+    this._applyView();
     this._renderNow();
   }
 
   _buildWorld() { // overworld vista (also the travel backdrop)
     this._disposeScenery();
     this.scene.fog = new THREE.Fog(new THREE.Color('#2a2060'), 26, 74);
+    setSpread(this._narrow ? 19 : 30); // compress the landmark path on phones
     this.world = new WorldScene();
     this.scene.add(this.world.group);
     if (this.post) this.post.setGrade({ lift: [0.02, 0.0, 0.03], gain: [1.05, 0.98, 1.08] });
-    this._view = WORLD_CAM;
     this.sceneId = 'world';
     this._ensureHero();
     this.hero.setScale(4);
     this.hero.setPosition(0, 0, -1);
     this.scene.add(this.hero.group);
+    this._applyView();
     this._renderNow();
   }
 
@@ -313,7 +445,7 @@ class Stage3D {
     this.traveling = true;
     this._buildWorld(); // markers intentionally omitted during travel
     const hero = this.hero;
-    const startX = -14, endX = landmarkX(target);
+    const startX = pathStartX(), endX = landmarkX(target);
     hero.setPosition(startX, 0, -1);
     hero.setWalking(true);
     const t0 = this.clock.elapsedTime, dur = 1.7;
@@ -392,7 +524,11 @@ class Stage3D {
     this.hero.setScale(scale);
   }
 
-  walkIn() { this._ensureHero(); this.hero.play('walk-in', 0.75); }
+  walkIn() {
+    this._ensureHero();
+    this.hero.play('walk-in', 0.75);
+    this.magicCircle('#5eead4', this.hero, 2.0, 1.0); // arrival portal glow
+  }
   dialogEl() { return this.els.dialog; }
 
   // ---- battle (basic in M1; full choreography + WebGL HP in M3) -------------
@@ -402,17 +538,21 @@ class Stage3D {
       this.dissolved = false;
       if (this.enemy) { this.scene.remove(this.enemy.group); this.enemy.dispose(); }
       this.enemy = new Actor(window.CLIQ.sprites[meta.sprite], (meta.scale || 9) - 1, false);
-      this.enemy.setPosition(ENEMY_POS[0], 0, ENEMY_POS[2]);
+      this.enemy.setPosition(this._narrow ? ENEMY_X_NARROW : ENEMY_POS[0], 0, ENEMY_POS[2]);
       this.enemy.play('walk-in', 0.9);
       this.scene.add(this.enemy.group);
+      // boss entrance: a violet summoning circle
+      this.magicCircle('#c084fc', this.enemy, 2.8, 1.4);
+      this.flashAt('#c084fc', this.enemy, 2.6, 0.8);
       const pe = this.els.plates.querySelector('.plate-enemy .hp-name');
       if (pe) pe.textContent = meta.name;
     }
     if (this.enemy) this.enemy.setVisible(true);
     this.els.plates.hidden = false;
     this.els.plates.querySelector('.enemy-fill').style.width = Math.round(enemyPct * 100) + '%';
-    this.els.plates.querySelector('.hero-fill').style.width = Math.round((hearts / 3) * 100) + '%';
-    this.els.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(3 - hearts);
+    const maxH = (window.CLIQ.game && window.CLIQ.game.maxHearts) ? window.CLIQ.game.maxHearts() : 3;
+    this.els.plates.querySelector('.hero-fill').style.width = Math.round((hearts / maxH) * 100) + '%';
+    this.els.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(Math.max(0, maxH - hearts));
     if (won && !this.dissolved) {
       this.dissolved = true;
       if (this.enemy) this._dissolveEnemy();
@@ -444,19 +584,26 @@ class Stage3D {
     if (side === 'enemy') {
       this._ensureHero();
       this.hero.play('cast', 0.45);
+      this.magicCircle('#67e8f9', this.hero, 1.8, 0.7); // attack sigil
       setTimeout(() => {
         if (!this.enemy || !this.enemy.group.visible) return;
         this.enemy.play('hit', 0.48);
         this.burst(this.enemy, '#67e8f9', 12);
+        this.flashAt('#67e8f9', this.enemy, 2.6, 0.4); // impact flash
+        this.magicCircle('#67e8f9', this.enemy, 1.6, 0.6);
         this.pop(this.enemy, String(200 + Math.floor(Math.random() * 300)));
       }, 170);
     } else {
-      if (this.enemy) this.enemy.play('lunge', 0.42);
+      if (this.enemy) {
+        this.enemy.play('lunge', 0.42);
+        this.magicCircle('#ff5a5a', this.enemy, 1.8, 0.7); // enemy casts back
+      }
       setTimeout(() => {
         this._ensureHero();
         this.hero.play('flinch', 0.48);
         this.cameraShake(450);
         this.burst(this.hero, '#f87171', 10);
+        this.flashAt('#ff5a5a', this.hero, 2.2, 0.4);
         this.pop(this.hero, '-1 ♥', 'dmg-hero');
       }, 160);
     }
@@ -480,6 +627,10 @@ class Stage3D {
       return;
     }
     const kind = window.CLIQ.fxFor(e);
+    // every successful command casts: rune circle underfoot + a light flash
+    const mcol = kind && kind.startsWith('proj:') ? kind.slice(5) : (MAGIC_COLORS[kind] || '#67e8f9');
+    this.magicCircle(mcol, this.hero, kind === 'conjure' || kind === 'write' ? 1.9 : 1.5, 0.8);
+    this.flashAt(mcol, this.hero, 1.7, 0.45);
     const side = this.heroFxPoint(-56, 4);
     if (kind === 'scan') {
       this.spawn('fx-ring', side.x, side.y, 'width:60px;height:60px', 950);
@@ -519,7 +670,14 @@ class Stage3D {
     }
   }
 
-  cast() { this._ensureHero(); this.hero.play('cast', 0.45); this.burst(this.hero, '#fcd34d', 10); }
+  cast() {
+    this._ensureHero();
+    this.hero.play('cast', 0.45);
+    this.burst(this.hero, '#fcd34d', 10);
+    // task complete: a big golden seal blooms under the hero
+    this.magicCircle('#fcd34d', this.hero, 2.3, 1.1);
+    this.flashAt('#fcd34d', this.hero, 2.4, 0.6);
+  }
 
   // ---- DOM overlay helpers (projected from 3D anchors) ---------------------
   _project(v) {

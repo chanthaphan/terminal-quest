@@ -103,7 +103,7 @@
     G.currentModule = null;
     G.currentQuest = null;
     G.taskIndex = 0;
-    G.hearts = 3;
+    G.hearts = G.maxHearts ? G.maxHearts() : 3;
     if (s.questId) {
       for (const mod of CLIQ.modules) {
         const q = mod.quests.find((x) => x.id === s.questId);
@@ -376,12 +376,55 @@
     return CLIQ.classDefs ? CLIQ.classDefs.find((c) => c.id === G.state.class) : null;
   };
 
+  // Boss-fight heart capacity — raised by conquest gear (Wayfinder Charm).
+  G.maxHearts = function () {
+    return CLIQ.gearPerks ? CLIQ.gearPerks().maxHearts : 3;
+  };
+
+  // Lose a heart unless the Echo Shield absorbs it. Returns true if absorbed.
+  G.loseHeart = function () {
+    if (CLIQ.gearPerks && CLIQ.gearPerks().shield && !G.shieldUsed) {
+      G.shieldUsed = true;
+      term.print(tr('🛡 The Echo Shield rings out — the blow is absorbed!'), 'term-success');
+      return true;
+    }
+    G.hearts--;
+    G.flawless = 0;   // regen streak broken
+    G.taskStreak = 0; // quill streak broken
+    return false;
+  };
+
+  // Announce newly earned conquest gear (realm fully cleared). Ownership is
+  // derived from quest completion; gearSeen only tracks what was announced.
+  G.awardGear = function () {
+    if (!CLIQ.gearDefs || !CLIQ.gearOwned) return;
+    G.state.gearSeen = G.state.gearSeen || {};
+    let earned = false;
+    for (const id of CLIQ.gearOwned()) {
+      if (G.state.gearSeen[id]) continue;
+      G.state.gearSeen[id] = true;
+      earned = true;
+      const def = CLIQ.gearDefs[id];
+      term.print(tr('⚔ REALM CONQUERED — you earned ') + tr(def.name) + '!', 'term-success');
+      term.print('   ' + tr(def.desc), 'term-success');
+      const toast = el('div', 'levelup-toast', tr(def.name) + ' — ' + tr(def.desc));
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 4500);
+    }
+    if (earned) {
+      if (CLIQ.sfx) CLIQ.sfx.play('levelup');
+      G.save();
+    }
+  };
+
   G.addXP = function (amount, label) {
     const before = G.levelInfo().n;
     const cls = G.classDef();
     if (cls && G.currentModule && cls.realms.includes(G.currentModule.id)) {
       amount = Math.round(amount * 1.1); // class home-realm bonus
     }
+    if (CLIQ.gearPerks) amount = Math.round(amount * CLIQ.gearPerks().xpMult); // conquest gear bonus
     G.state.xp += amount;
     G.save();
     G.renderHUD();
@@ -467,7 +510,9 @@
     G.currentModule = mod;
     G.currentQuest = quest;
     G.taskIndex = 0;
-    G.hearts = 3;
+    G.hearts = G.maxHearts();
+    G.shieldUsed = false; // Echo Shield recharges each fight
+    G.flawless = 0;       // Warden's Greaves regen counter
     G.questHints = 0;
     G.battleLog = null;
     $('#sidebar').classList.remove('open'); // close the map drawer on narrow screens
@@ -526,7 +571,7 @@
     panel.appendChild(story);
 
     if (q.boss && !(CLIQ.battle && CLIQ.battle.isBattle(q))) {
-      const hearts = el('div', 'hearts', '❤'.repeat(G.hearts) + '♡'.repeat(3 - G.hearts));
+      const hearts = el('div', 'hearts', '❤'.repeat(G.hearts) + '♡'.repeat(Math.max(0, G.maxHearts() - G.hearts)));
       panel.appendChild(hearts);
     }
 
@@ -567,16 +612,21 @@
           G.state.hintsUsed++;
           G.questHints = (G.questHints || 0) + 1;
           G.save();
-          if (q.hardcore) {
+          if (q.hardcore && CLIQ.gearPerks && CLIQ.gearPerks().voidhints) {
+            // Alchemist's Talisman: Void hints are free.
+            term.print(tr('⚗️ The Alchemist\'s Talisman pays the Void its price — the hint is free.'), 'term-success');
+          } else if (q.hardcore) {
             // In the Void, knowledge has a price: each hint costs a heart.
-            G.hearts--;
-            if (CLIQ.sfx) CLIQ.sfx.play('hurt');
-            term.print(tr('🩸 The Void feeds on your hesitation — that hint cost a heart!'), 'term-err');
+            const absorbed = G.loseHeart();
+            if (CLIQ.sfx) CLIQ.sfx.play(absorbed ? 'blip' : 'hurt');
+            if (!absorbed) term.print(tr('🩸 The Void feeds on your hesitation — that hint cost a heart!'), 'term-err');
             const inBattle = CLIQ.battle && CLIQ.battle.isBattle(q);
             if (G.hearts <= 0) {
               term.print(tr('☠ The boss overwhelms you! You gather your strength and the battle restarts...'), 'term-err');
               if (inBattle) G.battleLog = tr('☠ You have fallen... but heroes rise again. The battle restarts!');
-              G.hearts = 3;
+              G.hearts = G.maxHearts();
+              G.shieldUsed = false;
+              G.flawless = 0;
               G.taskIndex = 0;
               if (q.setup) q.setup(G.world);
               setTimeout(() => G.renderStory(), 600);
@@ -764,6 +814,20 @@
     if (feedbackHtml) {
       term.print('✔ ' + feedbackHtml, 'term-success');
     }
+    // Chronicler's Quill: every 5th flawless task in a row pays bonus XP.
+    if (CLIQ.gearPerks && CLIQ.gearPerks().streak) {
+      G.taskStreak = (G.taskStreak || 0) + 1;
+      if (G.taskStreak % 5 === 0) G.addXP(10, tr('Chronicler\'s streak'));
+    }
+    // Warden's Greaves: 3 flawless boss tasks regain a heart.
+    if (inBattle && CLIQ.gearPerks && CLIQ.gearPerks().regen && G.hearts < G.maxHearts()) {
+      G.flawless = (G.flawless || 0) + 1;
+      if (G.flawless >= 3) {
+        G.flawless = 0;
+        G.hearts++;
+        term.print(tr('⚙️ The Warden\'s Greaves hum — a heart mends itself!'), 'term-success');
+      }
+    }
     const questJustDone = G.taskIndex >= q.tasks.length;
     if (questJustDone) {
       if (inBattle) G.battleLog = tr('🏆 VICTORY! The beast dissolves into well-behaved processes!');
@@ -772,6 +836,7 @@
         G.addXP(q.boss ? 60 : 25, q.boss ? 'boss defeated' : 'quest complete');
         G.save();
       }
+      G.awardGear();
       if (CLIQ.sfx) CLIQ.sfx.play('fanfare');
       if (!inBattle && CLIQ.stage) CLIQ.stage.cast();
     } else {
@@ -807,13 +872,16 @@
     } else {
       btn.classList.add('wrong');
       btn.disabled = true;
+      G.taskStreak = 0; // quill streak broken
       if (CLIQ.sfx) CLIQ.sfx.play(G.currentQuest.boss ? 'hurt' : 'error');
       if (G.currentQuest.boss) {
-        G.hearts--;
+        const absorbed = G.loseHeart();
         if (G.hearts <= 0) {
           term.print(tr('☠ The boss overwhelms you! You gather your strength and the battle restarts...'), 'term-err');
           if (inBattle) G.battleLog = tr('☠ You have fallen... but heroes rise again. The battle restarts!');
-          G.hearts = 3;
+          G.hearts = G.maxHearts();
+          G.shieldUsed = false;
+          G.flawless = 0;
           G.taskIndex = 0;
           if (G.currentQuest.setup) G.currentQuest.setup(G.world);
           setTimeout(() => {
@@ -822,7 +890,9 @@
           }, 600);
           return;
         }
-        if (inBattle) G.battleLog = tr('💥 The enemy counterattacks! You lose a heart!');
+        if (inBattle) G.battleLog = absorbed
+          ? tr('🛡 The enemy strikes — but the Echo Shield holds!')
+          : tr('💥 The enemy counterattacks! You lose a heart!');
       }
       term.print(tr('✘ Not quite. ') + (task.quiz.explainWrong ? tr(task.quiz.explainWrong) : tr('Think again and try another answer.')), 'term-err');
       G.renderStory(); // re-render to update hearts (keeps disabled state lost — acceptable)

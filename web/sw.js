@@ -2,7 +2,7 @@
    MAINTENANCE CONTRACT: when you add/remove a file, update the <script> list in
    index.html, the ASSETS list below, and bump CACHE — deployed changes only reach
    installed clients after the version bump. */
-const CACHE = 'terminal-quest-v1';
+const CACHE = 'terminal-quest-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -25,6 +25,7 @@ const ASSETS = [
   './js/git.js',
   './js/docker.js',
   './js/sprites.js',
+  './js/gear.js',
   './js/fxmap.js',
   './js/stage.js',
   './js/battle.js',
@@ -64,7 +65,12 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// During local development, let every request hit the network (the dev server
+// disables HTTP caching) so edits show up on plain reload. Cache-first only in
+// production (GitHub Pages / any non-localhost origin).
+const DEV = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  if (DEV || e.request.method !== 'GET') return;
   e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)));
 });

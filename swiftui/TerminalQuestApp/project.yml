@@ -1,0 +1,38 @@
+# XcodeGen spec — regenerate the Xcode project with:  xcodegen generate
+# (Run from this directory. Install: brew install xcodegen)
+name: TerminalQuestApp
+options:
+  bundleIdPrefix: com.chanthaphan
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  TerminalQuestApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: TerminalQuestApp
+      # the whole game rides along as a blue folder reference; edits to web/
+      # are picked up on the next build
+      - path: ../../web
+        type: folder
+        buildPhase: resources
+    info:
+      path: TerminalQuestApp/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chanthaphan.terminalquest
+        DEVELOPMENT_TEAM: GY4VPF976W
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
