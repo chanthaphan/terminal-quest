@@ -5,7 +5,7 @@
    hit / lunge / flinch / dissolve are a time-driven state machine updated each
    frame, replacing the DOM stage's CSS keyframes. */
 import * as THREE from 'three';
-import { spriteTexture, walkVariant, glowTexture, noiseTexture } from './texgen.js';
+import { spriteTexture, walkVariant, blinkVariant, glowTexture, noiseTexture } from './texgen.js';
 
 const PX = 0.0165; // world units per (sprite pixel × old `scale` unit)
 
@@ -49,6 +49,7 @@ export class Actor {
     this.isHero = isHero;
     this.tex = spriteTexture(sprite);
     this.walkTex = isHero ? walkVariant(sprite) : null;
+    this.blinkTex = blinkVariant(sprite); // null unless the sprite has eyes defined
     const w = this.tex.userData.w, h = this.tex.userData.h;
     this.mat = new THREE.ShaderMaterial({
       uniforms: {
@@ -84,6 +85,10 @@ export class Actor {
     this.anim = null;           // { name, t0, dur }
     this.walking = false;
     this._phase = Math.random() * 6.28;
+    // aliveness: blink + idle fidget scheduling
+    this._nextBlink = 1.5 + Math.random() * 3;
+    this._blinkUntil = 0;
+    this._nextFidget = 5 + Math.random() * 5;
   }
 
   setScale(oldScale) {
@@ -93,6 +98,7 @@ export class Actor {
     this.mesh.scale.set(s.w, s.h, 1);
     this.mesh.position.y = s.h / 2;
     this.shadow.scale.set(s.w * 1.15, s.w * 0.5, 1);
+    this._w = s.w;
     this._h = s.h;
   }
 
@@ -114,17 +120,34 @@ export class Actor {
     const p = this.group.position;
     this.group.rotation.y = Math.atan2(cam.position.x - p.x, cam.position.z - p.z);
 
-    let dx = 0, dy = 0, flash = 0, rot = 0;
-    // idle bob
-    dy += Math.sin(this.t * 2.4 + this._phase) * 0.03 * (this.isHero ? 1 : 0.8);
+    let dx = 0, dy = 0, flash = 0, rot = 0, flip = false;
+    // breathing replaces most of the old up-down bob: the body itself swells
+    const breathe = 1 + Math.sin(this.t * 1.8 + this._phase) * 0.013;
+    dy += Math.sin(this.t * 2.4 + this._phase) * 0.012 * (this.isHero ? 1 : 0.8);
 
     // walking: swap to stride texture + hop
     if (this.walking && this.walkTex) {
       const frame = Math.floor(this.t * 8) % 2;
       this.mat.uniforms.map.value = frame ? this.walkTex : this.tex;
       dy += Math.abs(Math.sin(this.t * 10)) * 0.04;
-    } else if (this.mat.uniforms.map.value !== this.tex) {
-      this.mat.uniforms.map.value = this.tex;
+    } else {
+      // blink every few seconds while idle
+      if (this.blinkTex) {
+        if (this.t > this._nextBlink) {
+          this._blinkUntil = this.t + 0.13;
+          this._nextBlink = this.t + 2.2 + Math.random() * 3.4;
+        }
+        const want = this.t < this._blinkUntil ? this.blinkTex : this.tex;
+        if (this.mat.uniforms.map.value !== want) this.mat.uniforms.map.value = want;
+      } else if (this.mat.uniforms.map.value !== this.tex) {
+        this.mat.uniforms.map.value = this.tex;
+      }
+      // occasional idle fidgets: a glance to the side, a lean, a tiny hop
+      if (!this.anim && this.isHero && this.t > this._nextFidget) {
+        const pick = ['fidget-turn', 'fidget-lean', 'fidget-hop'][Math.floor(Math.random() * 3)];
+        this.play(pick, pick === 'fidget-turn' ? 1.1 : 0.6);
+        this._nextFidget = this.t + 5 + Math.random() * 6;
+      }
     }
 
     if (this.anim) {
@@ -143,6 +166,9 @@ export class Actor {
           case 'step': dx += ease * 0.12; dy += ease * 0.08; break;
           case 'dash-left': dx += ease * -0.5; break;
           case 'dash-right': dx += ease * 0.5; break;
+          case 'fidget-turn': flip = k > 0.15 && k < 0.85; break;           // glance the other way
+          case 'fidget-lean': rot = Math.sin(k * Math.PI) * 0.09; break;    // shift weight
+          case 'fidget-hop': dy += Math.sin(k * Math.PI) * 0.07; break;     // small bounce
         }
         if (this.anim.name !== 'flinch') this.setTint(1, 1, 1);
       }
@@ -155,6 +181,8 @@ export class Actor {
     this.mesh.position.x = dx;
     this.mesh.position.y = this._h / 2 + dy;
     this.mesh.rotation.z = rot;
+    // breathing + mirrored glance applied through scale each frame
+    this.mesh.scale.set(this._w * (flip ? -1 : 1), this._h * breathe, 1);
   }
 
   dispose() {
@@ -162,6 +190,7 @@ export class Actor {
     this.mat.dispose();
     this.tex.dispose();
     if (this.walkTex) this.walkTex.dispose();
+    if (this.blinkTex) this.blinkTex.dispose();
     this.shadow.geometry.dispose();
     this.shadow.material.dispose();
   }

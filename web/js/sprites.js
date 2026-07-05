@@ -7,69 +7,63 @@
   // renders at the same size (renderers divide the draw scale by res).
   CLIQ.sprites = {
     hero: {
-      // Octopath-style proportions: tall and slim (head ≈ 29%), hooded, caped,
-      // muted palette. res 2.4 keeps the on-screen size close to the old hero.
-      res: 2.4,
+      // Dragon Quest style: Toriyama proportions (head ~35%), spiky class-
+      // tinted hair, gold headband, big bright eyes, royal-blue tunic, red
+      // cape, chunky boots. res 2.2 keeps the on-screen size.
+      res: 2.2,
+      blinkRows: [8, 9], // eye rows — the renderer makes a closed-eye blink frame
       palette: {
-        H: '#3b82f6', h: '#1e40af',               // hood (class-tinted)
-        F: '#e8c39a', f: '#c99b72',               // skin + shade
-        E: '#0f172a',                             // outline + eyes
-        A: '#8a94a6', a: '#5b6472', t: '#c3cad6', // tunic, shade, highlight
-        R: '#7a3b46', r: '#5a2a34',               // cape edges
-        S: '#dfe5ec', s: '#ffffff',               // blade + shine
-        y: '#d4a017',                             // belt, guard & pommel
-        L: '#4a5261', l: '#353b47',               // trousers + shade
-        G: '#6e4a2f', g: '#52351f',               // boots + shade
+        H: '#3b82f6', h: '#1e40af',               // spiky hair (class-tinted)
+        F: '#ffd9b0', f: '#eab98a',               // skin + shade
+        E: '#101828',                             // outline, eyes & mouth
+        W: '#ffffff',                             // eye glints + gloves
+        U: '#2563eb', u: '#1d4ed8', t: '#93c5fd', // tunic, shade, highlight
+        R: '#dc2626',                             // cape
+        S: '#e5e7eb', s: '#ffffff',               // blade + shine
+        y: '#fbbf24',                             // headband, belt, guard
+        L: '#15803d', l: '#14532d',               // trousers + shade
+        G: '#b45309', g: '#7c2d12',               // boots + shade
       },
       px: [
-        '.............EEEEEE.............',
-        '...........EEHHHHHHEE...........',
-        '..........EHHHHHHHHHHE..........',
-        '..........EHHHHhhHHHHE..........',
-        '..........EHhhhhhhhhHE..........',
-        '..........EEhhhhhhhhEE..........',
-        '..........EFFFFFFFFFFE..........',
-        '..........EFFFFFFFFFFE..........',
-        '..........EFEEFFFFEEFE..........',
-        '..........EFFFFFFFFFFE..........',
-        '..........EFfFFFFFFfFE..........',
-        '..........EFFffffffFFE..........',
-        '......s....EFFFFFFFFE...........',
-        '.....Ss.....EEEEEEEE............',
-        '.....Ss.EEAAAAAAAAAAAAEE........',
-        '.....SsERAAtAAAAAAAAtAARE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsERaAyyyyyyyyyyAaRE.......',
-        '.....SsERaAAAAAAAAAAAAaRE.......',
-        '.....SsEFfAAAAAAAAAAAAaRE.......',
-        '....yyyy..EaAAAAAAAAaE..........',
-        '.....yy....EaaaaaaaaaaE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELLLE...ELLLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELLLE...ELLLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELLLE...ELLLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELLLE...ELLLE.........',
-        '..........ELlLE...ELlLE.........',
-        '..........ELlLE...ELlLE.........',
-        '.........EGGGGE...EGGGGE........',
-        '.........EGgGGE...EGGgGE........',
-        '.........EGGGGE...EGGGGE........',
-        '.........EGgGGE...EGGgGE........',
-        '.........EGGGGE...EGGGGE........',
-        '.........EGGGGE...EGGGGE........',
-        '.........EEEEEE...EEEEEE........',
+        '..........E....E....E...........',
+        '.........EHE..EHE..EHE..........',
+        '.........EHHE.EHHHE.EHHE........',
+        '........EHHHHHHHHHHHHHHHE.......',
+        '.......EHHHhhhhhhhhhhhHHHE......',
+        '.......EyyyyyyyyyyyyyyyyyE......',
+        '.......EHFFFFFFFFFFFFFFFHE......',
+        '.......EFFFFFFFFFFFFFFFFFE......',
+        '.......EFFFEEFFFFFFFEEFFFE......',
+        '.......EFFFEWFFFFFFFEWFFFE......',
+        '.......EFFFFFFFFFFFFFFFFFE......',
+        '.......EFFFFFFEEEEFFFFFFFE......',
+        '........EFFFFFFFFFFFFFFFE.......',
+        '......s...EEFFFFFFFFFEE.........',
+        '.....Ss.EEUUUUUUUUUUUUEE........',
+        '.....Ss.ERUtUUUUUUUUtURE........',
+        '.....Ss.ERuUUUUUUUUUUuRE........',
+        '.....Ss.ERuUUUUUUUUUUuRE........',
+        '.....Ss.ERyyyyyyyyyyyyRE........',
+        '.....Ss.ERuUUUUUUUUUUuRE........',
+        '.....Ss.ERuUUUUUUUUUUuRE........',
+        '.....SsEWWuUUUUUUUUuWWE.........',
+        '........ERuuuuuuuuuuuuRE........',
+        '.........ERRRRRRRRRRRRE.........',
+        '....yyyy..ELLLLE..ELLLLE........',
+        '.....yy...ELlLLE..ELLlLE........',
+        '..........ELLLLE..ELLLLE........',
+        '..........ELlLLE..ELLlLE........',
+        '..........ELLLLE..ELLLLE........',
+        '..........ELlLLE..ELLlLE........',
+        '..........ELLLLE..ELLLLE........',
+        '..........ELlLLE..ELLlLE........',
+        '.........EGGGGGE..EGGGGGE.......',
+        '.........EGgGGGE..EGGgGGE.......',
+        '.........EGGGGGE..EGGGGGE.......',
+        '.........EGgGGGE..EGGgGGE.......',
+        '.........EGGGGGE..EGGGGGE.......',
+        '.........EGGGGGE..EGGGGGE.......',
+        '.........EEEEEEE..EEEEEEE.......',
       ],
     },
 
@@ -303,7 +297,7 @@
   CLIQ.heroSprite = function (classId) {
     const base = CLIQ.sprites.hero;
     const cls = CLIQ.classDefs.find((c) => c.id === classId);
-    let sprite = cls ? { px: base.px, palette: Object.assign({}, base.palette, cls.tint), res: base.res } : base;
+    let sprite = cls ? { px: base.px, palette: Object.assign({}, base.palette, cls.tint), res: base.res, blinkRows: base.blinkRows } : base;
     // conquest gear (js/gear.js) is painted on top for every renderer
     if (CLIQ.applyGear) sprite = CLIQ.applyGear(sprite);
     return sprite;

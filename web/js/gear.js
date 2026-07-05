@@ -29,52 +29,52 @@
     bash: {
       name: '🗡 Gilded Blade', perk: 'xp',
       desc: 'Your blade gleams gold. +5% XP from every deed.',
-      px: [...colRun(5, 13, 24, 'B'), ...colRun(6, 12, 24, 'B')],
+      px: [...colRun(5, 14, 23, 'B'), ...colRun(6, 13, 23, 'B')],
     },
     remote: {
       name: '🛡 Echo Shield', perk: 'shield',
       desc: 'Forged from a silent server\'s hull. Blocks the first heart you would lose in each boss fight.',
-      px: [...colRun(25, 15, 22, 'D'), ...colRun(26, 16, 21, 'D')],
+      px: [...colRun(25, 15, 21, 'D'), ...colRun(26, 16, 20, 'D')],
     },
     concepts: {
       name: '🧭 Wayfinder Charm', perk: 'heart',
       desc: 'You always know the way home. +1 heart in every boss fight.',
-      px: [[17, 15, 'N'], [17, 16, 'N'], [18, 15, 'N'], [18, 16, 'N']],
+      px: [[16, 15, 'N'], [16, 16, 'N'], [17, 15, 'N'], [17, 16, 'N']],
     },
     azure: {
       name: '☁️ Skyforged Pauldrons', perk: 'xp',
       desc: 'Cloud-metal shoulders. +5% XP from every deed.',
-      px: [...rowRun(14, 8, 11, 'P'), ...rowRun(14, 20, 23, 'P'), [15, 8, 'P'], [15, 9, 'P'], [15, 22, 'P'], [15, 23, 'P']],
+      px: [...rowRun(14, 8, 10, 'P'), ...rowRun(14, 21, 23, 'P'), [15, 8, 'P'], [15, 9, 'P'], [15, 22, 'P'], [15, 23, 'P']],
     },
     k8s: {
       name: '⚙️ Warden\'s Greaves', perk: 'regen',
       desc: 'Self-healing boots. Clear 3 boss tasks without losing a heart to regain one.',
-      px: [...rect(42, 46, 10, 13, 'K'), ...rect(42, 46, 19, 22, 'K')],
+      px: [...rect(33, 38, 10, 14, 'K'), ...rect(33, 38, 19, 23, 'K')],
     },
     git: {
       name: '📜 Chronicler\'s Quill', perk: 'streak',
       desc: 'It writes your legend as you go. Every 5th task in a row without a mistake pays +10 bonus XP.',
-      px: [[9, 25, 'Q'], [10, 25, 'Q'], [11, 25, 'Q'], [12, 25, 'Q'], [13, 26, 'Q']],
+      px: [[8, 26, 'Q'], [9, 26, 'Q'], [10, 26, 'Q'], [11, 26, 'Q'], [12, 27, 'Q']],
     },
     docker: {
       name: '🔥 Emberforged Gauntlets', perk: 'xp',
       desc: 'Still warm from the foundry. +5% XP from every deed.',
-      px: [[20, 8, 'O'], [20, 9, 'O'], [21, 8, 'O'], [21, 9, 'O'], [20, 22, 'O'], [20, 23, 'O'], [21, 22, 'O'], [21, 23, 'O']],
+      px: [[20, 8, 'O'], [20, 9, 'O'], [21, 8, 'O'], [21, 9, 'O'], [20, 21, 'O'], [20, 22, 'O'], [21, 20, 'O'], [21, 21, 'O']],
     },
     ops: {
       name: '⚗️ Alchemist\'s Talisman', perk: 'voidhints',
       desc: 'Distilled understanding. Hints in the Void no longer cost hearts.',
-      px: rowRun(22, 14, 17, 'M'),
+      px: rowRun(18, 14, 17, 'M'),
     },
     final: {
       name: '👑 Archmage\'s Crown', perk: 'crown',
       desc: 'The Nine Realms kneel. +10% XP from every deed.',
-      px: [[0, 13, 'C'], [0, 15, 'C'], [0, 18, 'C'], ...rowRun(1, 12, 19, 'C'), ...rowRun(2, 11, 20, 'C')],
+      px: [[0, 10, 'C'], [0, 15, 'C'], [0, 20, 'C'], ...rowRun(5, 8, 24, 'C')],
     },
     void: {
       name: '🌀 Aura of the Nine', perk: 'aura',
       desc: 'The Void itself bows. Your legend is complete.',
-      px: [[6, 3, 'V'], [12, 28, 'V'], [20, 2, 'V'], [30, 29, 'V'], [40, 3, 'V'], [44, 27, 'V']],
+      px: [[3, 3, 'V'], [10, 28, 'V'], [17, 2, 'V'], [26, 29, 'V'], [33, 3, 'V'], [37, 27, 'V']],
     },
   };
 
@@ -102,7 +102,7 @@
         if (px[r] && c < px[r].length) px[r][c] = ch;
       }
     }
-    return { palette: Object.assign({}, sprite.palette, GEAR_PALETTE), px: px.map((r) => r.join('')), res: sprite.res };
+    return { palette: Object.assign({}, sprite.palette, GEAR_PALETTE), px: px.map((r) => r.join('')), res: sprite.res, blinkRows: sprite.blinkRows };
   };
 
   // Aggregated perks for the engine.

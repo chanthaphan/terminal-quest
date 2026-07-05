@@ -125,6 +125,26 @@ export function spriteTexture(sprite) {
   return tex;
 }
 
+// A closed-eyes blink frame: in the given rows, eye pixels (E/W cells that sit
+// between skin) become skin-shade "lids". Outline E cells are left alone.
+export function blinkVariant(sprite) {
+  if (!sprite.blinkRows) return null;
+  const px = sprite.px.map((r) => r.split(''));
+  for (const ri of sprite.blinkRows) {
+    const row = px[ri];
+    if (!row) continue;
+    for (let c = 1; c < row.length - 1; c++) {
+      if (row[c] !== 'E' && row[c] !== 'W') continue;
+      // interior eye pixels have skin within 3 cells on BOTH sides; the face
+      // outline doesn't, so it survives the blink
+      const leftSkin = row.slice(Math.max(0, c - 3), c).includes('F');
+      const rightSkin = row.slice(c + 1, c + 4).includes('F');
+      if (leftSkin && rightSkin) row[c] = 'f';
+    }
+  }
+  return spriteTexture({ px: px.map((r) => r.join('')), palette: sprite.palette });
+}
+
 // A hero "walk" variant: shift the bottom rows ±1px to fake a stride.
 export function walkVariant(sprite) {
   const rows = sprite.px.slice();
