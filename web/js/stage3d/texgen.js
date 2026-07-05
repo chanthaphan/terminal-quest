@@ -137,8 +137,9 @@ export function blinkVariant(sprite) {
       if (row[c] !== 'E' && row[c] !== 'W') continue;
       // interior eye pixels have skin within 3 cells on BOTH sides; the face
       // outline doesn't, so it survives the blink
-      const leftSkin = row.slice(Math.max(0, c - 3), c).includes('F');
-      const rightSkin = row.slice(c + 1, c + 4).includes('F');
+      const skin = (arr) => arr.some((ch) => ch === 'F' || ch === 'f');
+      const leftSkin = skin(row.slice(Math.max(0, c - 3), c));
+      const rightSkin = skin(row.slice(c + 1, c + 4));
       if (leftSkin && rightSkin) row[c] = 'f';
     }
   }

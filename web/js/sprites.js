@@ -7,63 +7,69 @@
   // renders at the same size (renderers divide the draw scale by res).
   CLIQ.sprites = {
     hero: {
-      // Dragon Quest style: Toriyama proportions (head ~35%), spiky class-
-      // tinted hair, gold headband, big bright eyes, royal-blue tunic, red
-      // cape, chunky boots. res 2.2 keeps the on-screen size.
-      res: 2.2,
-      blinkRows: [8, 9], // eye rows — the renderer makes a closed-eye blink frame
+      // Octopath Traveler-fidelity sprite: ~3.4 heads tall, warm dark-brown
+      // outlines (not black), multi-tone shading per region (hair highlight
+      // streak, 3-tone coat, shaded scarf), tiny 1px eyes. Muted earthy palette;
+      // the hair stays class-tinted via H/h. res 2.6 sits the character small
+      // in the scene like the reference.
+      res: 2.6,
+      blinkRows: [9],
       palette: {
-        H: '#3b82f6', h: '#1e40af',               // spiky hair (class-tinted)
-        F: '#ffd9b0', f: '#eab98a',               // skin + shade
-        E: '#101828',                             // outline, eyes & mouth
-        W: '#ffffff',                             // eye glints + gloves
-        U: '#2563eb', u: '#1d4ed8', t: '#93c5fd', // tunic, shade, highlight
-        R: '#dc2626',                             // cape
-        S: '#e5e7eb', s: '#ffffff',               // blade + shine
-        y: '#fbbf24',                             // headband, belt, guard
-        L: '#15803d', l: '#14532d',               // trousers + shade
-        G: '#b45309', g: '#7c2d12',               // boots + shade
+        E: '#2e1e15',                             // warm dark outline + eyes
+        H: '#7c5433', h: '#543821', j: '#caa06a', // hair mid/shadow/highlight (H,h class-tinted)
+        F: '#e6b98e', f: '#c4906a',               // skin + shade
+        R: '#a33b31', r: '#7c2a24',               // scarf
+        U: '#3e5a45', u: '#2c4132', t: '#5d7a5e', // coat mid/dark/light
+        W: '#d9c8a8',                             // gloves
+        y: '#8a6a2e',                             // belt, guard & pommel
+        L: '#5a4a38', l: '#40342a',               // trousers + shade
+        G: '#3a2c20', g: '#2a2018',               // boots + shade
+        S: '#cfd4d6', s: '#f2f4f4',               // blade + shine
       },
       px: [
-        '..........E....E....E...........',
-        '.........EHE..EHE..EHE..........',
-        '.........EHHE.EHHHE.EHHE........',
-        '........EHHHHHHHHHHHHHHHE.......',
-        '.......EHHHhhhhhhhhhhhHHHE......',
-        '.......EyyyyyyyyyyyyyyyyyE......',
-        '.......EHFFFFFFFFFFFFFFFHE......',
-        '.......EFFFFFFFFFFFFFFFFFE......',
-        '.......EFFFEEFFFFFFFEEFFFE......',
-        '.......EFFFEWFFFFFFFEWFFFE......',
-        '.......EFFFFFFFFFFFFFFFFFE......',
-        '.......EFFFFFFEEEEFFFFFFFE......',
-        '........EFFFFFFFFFFFFFFFE.......',
-        '......s...EEFFFFFFFFFEE.........',
-        '.....Ss.EEUUUUUUUUUUUUEE........',
-        '.....Ss.ERUtUUUUUUUUtURE........',
-        '.....Ss.ERuUUUUUUUUUUuRE........',
-        '.....Ss.ERuUUUUUUUUUUuRE........',
-        '.....Ss.ERyyyyyyyyyyyyRE........',
-        '.....Ss.ERuUUUUUUUUUUuRE........',
-        '.....Ss.ERuUUUUUUUUUUuRE........',
-        '.....SsEWWuUUUUUUUUuWWE.........',
-        '........ERuuuuuuuuuuuuRE........',
-        '.........ERRRRRRRRRRRRE.........',
-        '....yyyy..ELLLLE..ELLLLE........',
-        '.....yy...ELlLLE..ELLlLE........',
-        '..........ELLLLE..ELLLLE........',
-        '..........ELlLLE..ELLlLE........',
-        '..........ELLLLE..ELLLLE........',
-        '..........ELlLLE..ELLlLE........',
-        '..........ELLLLE..ELLLLE........',
-        '..........ELlLLE..ELLlLE........',
-        '.........EGGGGGE..EGGGGGE.......',
-        '.........EGgGGGE..EGGgGGE.......',
-        '.........EGGGGGE..EGGGGGE.......',
-        '.........EGgGGGE..EGGgGGE.......',
-        '.........EGGGGGE..EGGGGGE.......',
-        '.........EGGGGGE..EGGGGGE.......',
-        '.........EEEEEEE..EEEEEEE.......',
+        '..............EEEE..............',
+        '............EEHHHHEE............',
+        '...........EHHjHHHHHE...........',
+        '..........EHjjHHHHHHhE..........',
+        '..........EHjHHHHHHhhE..........',
+        '..........EHHHHHHHHhhE..........',
+        '..........EhHHHHHHHhhE..........',
+        '..........EhFFFFFFFfhE..........',
+        '...........EFFFFFFFfE...........',
+        '...........EFEFFFFEfE...........',
+        '...........EFFFFFFFfE...........',
+        '...........EfFFFFFffE...........',
+        '............EfFFFFfE............',
+        '............ERRRRRRE............',
+        '.......s..ERRRRRRRRRRE..........',
+        '......Ss..EUUUUUUUUUUE..........',
+        '......Ss.EUUtUUUUUUuUUE.........',
+        '......Ss.EUtUUUUUUUUuUE.........',
+        '......Ss.EUUUUUUUUUUuUE.........',
+        '......Ss.EyyyyyyyyyyyyE.........',
+        '......Ss.EUuUUUUUUUUuUE.........',
+        '......Ss.EUuUUUUUUUUuUE.........',
+        '......SsEWWuUUUUUUuUUE..........',
+        '.....yyyy.EUuUUUUUUuUE..........',
+        '......yy..EuuUUUUUUuuE..........',
+        '..........EuuuuuuuuuuE..........',
+        '...........ELlE..ELlE...........',
+        '...........ELLE..ELLE...........',
+        '...........ELlE..ELlE...........',
+        '...........ELLE..ELLE...........',
+        '...........ELlE..ELlE...........',
+        '...........ELLE..ELLE...........',
+        '...........ELlE..ELlE...........',
+        '...........ELLE..ELLE...........',
+        '...........ELlE..ELlE...........',
+        '...........ELLE..ELLE...........',
+        '..........EGGGE..EGGGE..........',
+        '..........EGgGE..EGgGE..........',
+        '..........EGGGE..EGGGE..........',
+        '..........EGgGE..EGgGE..........',
+        '..........EGGGE..EGGGE..........',
+        '..........EGGGE..EGGGE..........',
+        '..........EEEEE..EEEEE..........',
       ],
     },
 
