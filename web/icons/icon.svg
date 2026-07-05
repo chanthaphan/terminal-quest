@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Terminal Quest app icon (authored source).
+     PNGs are generated from this design by a small PIL script — see the commit
+     message. Colors match the game palette: bg #0b0e14, green #4ade80 prompt,
+     purple #c084fc accent. Full-bleed background (iOS/Android apply their own
+     corner masks); the maskable variant scales the glyph into the 66% safe zone. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#0b0e14"/>
+  <rect x="32" y="32" width="960" height="960" rx="96" fill="none" stroke="#161b28" stroke-width="24"/>
+  <!-- soft green glow behind the prompt -->
+  <circle cx="512" cy="512" r="330" fill="#4ade80" opacity="0.10"/>
+  <!-- ">" chevron -->
+  <path d="M 280 300 L 560 512 L 280 724 L 280 596 L 392 512 L 280 428 Z" fill="#4ade80"/>
+  <!-- "_" cursor block -->
+  <rect x="580" y="640" width="240" height="84" fill="#c084fc"/>
+</svg>
