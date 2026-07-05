@@ -57,10 +57,11 @@ gray fizzle with a ✗ when a command errors.
 
 Toggle ภาษาไทย/English with the **ไทย** button in the top bar. Translations use an
 English-keyed dictionary ([js/lang_th.js](web/js/lang_th.js)) with graceful fallback —
-untranslated realms stay playable in English, and commands/terminal output stay in
-English on purpose (the commands are the skill). Currently translated: all UI chrome,
-realm/quest titles, level & class names, and the full Shell Sanctum realm (Realm 1);
-remaining realms roll out tier by tier.
+untranslated strings stay playable in English, and commands/terminal output stay in
+English on purpose (the commands are the skill). **All nine realms are fully
+translated** — every story, task, hint, and quiz across 47 quests (1,000+ strings in
+[js/lang_th*.js](web/js/)) — plus all UI chrome, titles, level & class names, and
+battle messages. Only command literals remain English, by design.
 
 ## Game mechanics
 
