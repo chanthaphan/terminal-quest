@@ -904,3 +904,18 @@ body {
   /* iOS Safari auto-zooms the viewport when focusing inputs under 16px */
   #term-input, #term-prompt { font-size: 16px; }
 }
+
+/* ---- compact top bar for phones ---- */
+@media (max-width: 560px) {
+  #topbar { padding-left: 10px; padding-right: 10px; gap: 8px; }
+  #logo { font-size: 12.5px; letter-spacing: 1px; white-space: nowrap; }
+  #hud { gap: 6px; font-size: 11px; flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
+  #hud-level {
+    max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #hud-bar { width: 54px; height: 8px; }
+  #hud-xp { white-space: nowrap; }
+  #save-dot { display: none; }
+  #reset-btn, #codex-btn, #sfx-btn, #save-btn, #lang-btn { padding: 2px 5px; font-size: 12px; }
+  #lang-btn { font-size: 10.5px; }
+}

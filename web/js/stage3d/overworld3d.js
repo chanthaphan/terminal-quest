@@ -8,7 +8,10 @@ import { skyTexture, patternTexture, glowTexture } from './texgen.js';
 
 // left-% of each realm along the path (matches the DOM stage's LANDMARK_X)
 const LANDMARK_X = { bash: 7, remote: 16, concepts: 25, azure: 34, k8s: 43, git: 52, docker: 61, ops: 70, final: 81, void: 92 };
-const SPREAD = 30; // world width the landmarks span
+let SPREAD = 30; // world width the landmarks span; compressed on narrow screens
+
+export function setSpread(v) { SPREAD = v; }
+export function pathStartX() { return -SPREAD / 2 - 1; }
 
 // per-realm accent color for the landmark beacon
 const REALM_COLOR = {

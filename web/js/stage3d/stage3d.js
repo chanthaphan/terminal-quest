@@ -16,7 +16,7 @@ import * as THREE from 'three';
 import { themeFor } from './themes3d.js';
 import { SceneBundle } from './scenebuilder.js';
 import { Actor, disposeSharedSpriteAssets } from './sprites3d.js';
-import { WorldScene, landmarkX } from './overworld3d.js';
+import { WorldScene, landmarkX, setSpread, pathStartX } from './overworld3d.js';
 import { PostPipeline } from './post.js';
 
 const qs = new URLSearchParams(location.search);
@@ -34,11 +34,17 @@ function reducedMotion() {
 
 // Diorama framing: camera pulled back and tilted down so actors stand in the
 // upper band of the stage, above the dialog box (which covers the lower ~46%).
-const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5 };
+// Portrait/narrow stages (phones) get a wider FOV, a further camera and actors
+// pulled toward center so the hero and the lit props stay in frame.
+const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 28 };
+const CAM_NARROW = { x: 0, y: 3.2, z: 12.5, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 34 };
 // Overworld framing: higher and wider to take in the winding path of landmarks.
-const WORLD_CAM = { x: 0, y: 7.5, z: 18, lookX: 0, lookY: 0.5, lookZ: -5 };
+const WORLD_CAM = { x: 0, y: 7.5, z: 18, lookX: 0, lookY: 0.5, lookZ: -5, fov: 28 };
+const WORLD_CAM_NARROW = { x: 0, y: 9, z: 26, lookX: 0, lookY: 0.5, lookZ: -5, fov: 40 };
 const HERO_POS = [1.8, 0, -2.0];
 const ENEMY_POS = [-1.9, 0, -2.0];
+const HERO_X_NARROW = 1.2;
+const ENEMY_X_NARROW = -1.45;
 
 class Stage3D {
   constructor(domStage) {
@@ -129,8 +135,25 @@ class Stage3D {
     const h = this.els.viewport.clientHeight || 1;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this._narrow = this.camera.aspect < 0.95; // portrait-ish (phones)
+    this._applyView();
     if (this.post) this.post.setSize();
+  }
+
+  // Picks the camera framing for the current scene + aspect and repositions the
+  // actors so they stay in frame on narrow screens.
+  _applyView() {
+    const world = this.sceneId === 'world';
+    this._view = world
+      ? (this._narrow ? WORLD_CAM_NARROW : WORLD_CAM)
+      : (this._narrow ? CAM_NARROW : CAM);
+    this.camera.fov = this._view.fov;
+    this.camera.updateProjectionMatrix();
+    if (!world && !this.traveling) {
+      const hx = this._narrow ? HERO_X_NARROW : HERO_POS[0];
+      if (this.hero) this.hero.group.position.x = hx;
+      if (this.enemy) this.enemy.group.position.x = this._narrow ? ENEMY_X_NARROW : ENEMY_POS[0];
+    }
   }
 
   _start() {
@@ -267,27 +290,28 @@ class Stage3D {
     this.bundle = new SceneBundle(theme);
     this.scene.add(this.bundle.group);
     if (this.post) this.post.setGrade(theme.grade);
-    this._view = CAM;
     this.sceneId = id;
     this._ensureHero();
     this.hero.setScale(7);
-    this.hero.setPosition(HERO_POS[0], 0, HERO_POS[2]);
+    this.hero.setPosition(this._narrow ? HERO_X_NARROW : HERO_POS[0], 0, HERO_POS[2]);
     this.scene.add(this.hero.group);
+    this._applyView();
     this._renderNow();
   }
 
   _buildWorld() { // overworld vista (also the travel backdrop)
     this._disposeScenery();
     this.scene.fog = new THREE.Fog(new THREE.Color('#2a2060'), 26, 74);
+    setSpread(this._narrow ? 19 : 30); // compress the landmark path on phones
     this.world = new WorldScene();
     this.scene.add(this.world.group);
     if (this.post) this.post.setGrade({ lift: [0.02, 0.0, 0.03], gain: [1.05, 0.98, 1.08] });
-    this._view = WORLD_CAM;
     this.sceneId = 'world';
     this._ensureHero();
     this.hero.setScale(4);
     this.hero.setPosition(0, 0, -1);
     this.scene.add(this.hero.group);
+    this._applyView();
     this._renderNow();
   }
 
@@ -313,7 +337,7 @@ class Stage3D {
     this.traveling = true;
     this._buildWorld(); // markers intentionally omitted during travel
     const hero = this.hero;
-    const startX = -14, endX = landmarkX(target);
+    const startX = pathStartX(), endX = landmarkX(target);
     hero.setPosition(startX, 0, -1);
     hero.setWalking(true);
     const t0 = this.clock.elapsedTime, dur = 1.7;
@@ -402,7 +426,7 @@ class Stage3D {
       this.dissolved = false;
       if (this.enemy) { this.scene.remove(this.enemy.group); this.enemy.dispose(); }
       this.enemy = new Actor(window.CLIQ.sprites[meta.sprite], (meta.scale || 9) - 1, false);
-      this.enemy.setPosition(ENEMY_POS[0], 0, ENEMY_POS[2]);
+      this.enemy.setPosition(this._narrow ? ENEMY_X_NARROW : ENEMY_POS[0], 0, ENEMY_POS[2]);
       this.enemy.play('walk-in', 0.9);
       this.scene.add(this.enemy.group);
       const pe = this.els.plates.querySelector('.plate-enemy .hp-name');
