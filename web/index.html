@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Terminal Quest — CLI Learner</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0b0e14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TermQuest" />
   <script type="importmap">
     { "imports": { "three": "./js/vendor/three.module.min.js" } }
   </script>
@@ -81,5 +88,14 @@
   <script type="module" src="js/stage3d/stage3d.js"></script>
   <script src="js/ui_resize.js"></script>
   <script src="js/main.js"></script>
+  <!-- PWA: adding a file? Also update sw.js ASSETS and bump its CACHE version. -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      // undefined under file:// (the iOS WKWebView wrapper), so this safely no-ops there
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
