@@ -40,6 +40,23 @@
     rez.addEventListener('dblclick', () => { stage.style.flexBasis = ''; localStorage.removeItem(KEY); });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  // On iOS the on-screen keyboard scrolls the page so only the focused terminal
+  // input stays visible and the game vanishes. Instead, shrink the layout to the
+  // visual viewport (flex re-distributes: scene + dialog + terminal all stay on
+  // screen) and pin the scroll position.
+  function initKeyboardFit() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const fit = () => {
+      const full = window.innerHeight;
+      // only intervene when something (the keyboard) actually eats real space
+      document.body.style.height = (full - vv.height > 60) ? vv.height + 'px' : '';
+      window.scrollTo(0, 0);
+    };
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', () => window.scrollTo(0, 0));
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { init(); initKeyboardFit(); });
+  else { init(); initKeyboardFit(); }
 })();

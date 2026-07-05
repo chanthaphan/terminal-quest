@@ -38,6 +38,12 @@ function reducedMotion() {
 // pulled toward center so the hero and the lit props stay in frame.
 const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 28 };
 const CAM_NARROW = { x: 0, y: 3.2, z: 12.5, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 34 };
+// Stacked layout (≤860px: the dialog sits BELOW the scene, so the whole frame is
+// visible): tilt up and drop the hero low in frame — background fills the shot
+// instead of empty foreground floor.
+const CAM_STACKED = { x: 0, y: 2.1, z: 9.5, lookX: 0, lookY: 1.85, lookZ: -2.5, fov: 28 };
+const CAM_STACKED_NARROW = { x: 0, y: 2.1, z: 11, lookX: 0, lookY: 1.85, lookZ: -2.5, fov: 34 };
+const stackedLayout = () => window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
 // Overworld framing: higher and wider to take in the winding path of landmarks.
 const WORLD_CAM = { x: 0, y: 8.2, z: 21, lookX: 0, lookY: 0.5, lookZ: -5, fov: 28 };
 const WORLD_CAM_NARROW = { x: 0, y: 9, z: 26, lookX: 0, lookY: 0.5, lookZ: -5, fov: 40 };
@@ -155,6 +161,8 @@ class Stage3D {
       const edge = 0.42 * spread + 1.3;
       const z = Math.max(16, edge / (0.94 * Math.tan((fov * Math.PI) / 360) * this.camera.aspect) - 7);
       this._view = { x: 0, y: 8.2 * (z / 21), z, lookX: 0, lookY: 0.5, lookZ: -5, fov };
+    } else if (stackedLayout()) {
+      this._view = this._narrow ? CAM_STACKED_NARROW : CAM_STACKED;
     } else {
       this._view = this._narrow ? CAM_NARROW : CAM;
     }
