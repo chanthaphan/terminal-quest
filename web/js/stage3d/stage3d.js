@@ -18,6 +18,13 @@ import { SceneBundle } from './scenebuilder.js';
 import { Actor, disposeSharedSpriteAssets } from './sprites3d.js';
 import { WorldScene, landmarkX, setSpread, pathStartX } from './overworld3d.js';
 import { PostPipeline } from './post.js';
+import { runeTexture } from './texgen.js';
+
+// spell-circle tint per command effect kind
+const MAGIC_COLORS = {
+  scan: '#67e8f9', read: '#facc15', conjure: '#8ab4ff', write: '#fcd34d',
+  transform: '#c084fc', slash: '#ff5a5a', step: '#a3e635', portal: '#5eead4',
+};
 
 const qs = new URLSearchParams(location.search);
 
@@ -109,6 +116,13 @@ class Stage3D {
       this.camera.position.set(CAM.x, CAM.y, CAM.z);
       this.camera.lookAt(CAM.lookX, CAM.lookY, CAM.lookZ);
       this.clock = new THREE.Clock();
+
+      // magic casting FX: pooled rune circles + reusable flash lights
+      this._mfx = [];
+      this._runeTex = runeTexture();
+      this._circlePool = [];
+      this._flashes = [0, 1].map(() => { const l = new THREE.PointLight(0xffffff, 0, 10); this.scene.add(l); return l; });
+      this._flashIdx = 0;
 
       // post-processing (bloom + tilt-shift + grade); ?post=off disables it
       this._postOn = qs.get('post') !== 'off';
@@ -229,6 +243,7 @@ class Stage3D {
   _frame() {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const t = this.clock.elapsedTime;
+    if (this._mfx && this._mfx.length) this._mfxTick(dt);
     if (this.bundle) this.bundle.update(dt, t);
     if (this.world) this.world.update(dt, t);
     if (this.hero) this.hero.update(dt, this.camera);
@@ -287,6 +302,66 @@ class Stage3D {
     return (Math.random() - 0.5) * 0.12;
   }
   cameraShake(ms) { this._shakeUntil = this.clock.elapsedTime + ms / 1000; }
+
+  // ---- magic casting FX ------------------------------------------------------
+  // A glowing rune circle blooms under the caster while a point light flashes —
+  // every command reads as a cast spell.
+  magicCircle(color, actor, size = 1.6, dur = 0.9) {
+    if (!this.renderer || !actor) return;
+    let m = this._circlePool.pop();
+    if (!m) {
+      const mat = new THREE.MeshBasicMaterial({
+        map: this._runeTex, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      });
+      m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      m.renderOrder = 1;
+    }
+    // camera-facing ellipse at the feet — reads as a ground circle from any
+    // camera pitch (a flat plane is invisible edge-on at the low stacked camera)
+    const p = actor.group.position;
+    m.position.set(p.x, 0.16, p.z + 0.3);
+    m.material.color.set(color);
+    this.scene.add(m);
+    this._mfx.push({ kind: 'circle', m, t0: this.clock.elapsedTime, dur, size, spin: 0 });
+  }
+
+  flashAt(color, actor, intensity = 1.8, dur = 0.45) {
+    if (!this.renderer || !actor) return;
+    const l = this._flashes[this._flashIdx++ % this._flashes.length];
+    const p = actor.group.position;
+    l.position.set(p.x, 1.6, p.z + 0.6);
+    l.color.set(color);
+    this._mfx.push({ kind: 'light', l, t0: this.clock.elapsedTime, dur, i0: intensity });
+  }
+
+  _mfxTick(dt) {
+    const t = this.clock.elapsedTime;
+    for (let i = this._mfx.length - 1; i >= 0; i--) {
+      const f = this._mfx[i];
+      const k = (t - f.t0) / f.dur;
+      if (f.kind === 'circle') {
+        if (k >= 1) {
+          this.scene.remove(f.m);
+          this._circlePool.push(f.m);
+          this._mfx.splice(i, 1);
+        } else {
+          f.m.material.opacity = Math.sin(k * Math.PI) * 0.85;
+          const s = f.size * (0.55 + 0.6 * k);
+          f.spin += dt * 2.2;
+          // tilt back from the camera so the ring reads as lying at the feet,
+          // then spin around its own normal
+          f.m.quaternion.copy(this.camera.quaternion);
+          f.m.rotateX(-1.15);
+          f.m.rotateZ(f.spin);
+          f.m.scale.set(s, s, s);
+        }
+      } else { // light
+        if (k >= 1) { f.l.intensity = 0; this._mfx.splice(i, 1); }
+        else f.l.intensity = f.i0 * (1 - k);
+      }
+    }
+  }
 
   // ---- scene ---------------------------------------------------------------
   _heroSig() {
@@ -449,7 +524,11 @@ class Stage3D {
     this.hero.setScale(scale);
   }
 
-  walkIn() { this._ensureHero(); this.hero.play('walk-in', 0.75); }
+  walkIn() {
+    this._ensureHero();
+    this.hero.play('walk-in', 0.75);
+    this.magicCircle('#5eead4', this.hero, 2.0, 1.0); // arrival portal glow
+  }
   dialogEl() { return this.els.dialog; }
 
   // ---- battle (basic in M1; full choreography + WebGL HP in M3) -------------
@@ -462,6 +541,9 @@ class Stage3D {
       this.enemy.setPosition(this._narrow ? ENEMY_X_NARROW : ENEMY_POS[0], 0, ENEMY_POS[2]);
       this.enemy.play('walk-in', 0.9);
       this.scene.add(this.enemy.group);
+      // boss entrance: a violet summoning circle
+      this.magicCircle('#c084fc', this.enemy, 2.8, 1.4);
+      this.flashAt('#c084fc', this.enemy, 2.6, 0.8);
       const pe = this.els.plates.querySelector('.plate-enemy .hp-name');
       if (pe) pe.textContent = meta.name;
     }
@@ -502,19 +584,26 @@ class Stage3D {
     if (side === 'enemy') {
       this._ensureHero();
       this.hero.play('cast', 0.45);
+      this.magicCircle('#67e8f9', this.hero, 1.8, 0.7); // attack sigil
       setTimeout(() => {
         if (!this.enemy || !this.enemy.group.visible) return;
         this.enemy.play('hit', 0.48);
         this.burst(this.enemy, '#67e8f9', 12);
+        this.flashAt('#67e8f9', this.enemy, 2.6, 0.4); // impact flash
+        this.magicCircle('#67e8f9', this.enemy, 1.6, 0.6);
         this.pop(this.enemy, String(200 + Math.floor(Math.random() * 300)));
       }, 170);
     } else {
-      if (this.enemy) this.enemy.play('lunge', 0.42);
+      if (this.enemy) {
+        this.enemy.play('lunge', 0.42);
+        this.magicCircle('#ff5a5a', this.enemy, 1.8, 0.7); // enemy casts back
+      }
       setTimeout(() => {
         this._ensureHero();
         this.hero.play('flinch', 0.48);
         this.cameraShake(450);
         this.burst(this.hero, '#f87171', 10);
+        this.flashAt('#ff5a5a', this.hero, 2.2, 0.4);
         this.pop(this.hero, '-1 ♥', 'dmg-hero');
       }, 160);
     }
@@ -538,6 +627,10 @@ class Stage3D {
       return;
     }
     const kind = window.CLIQ.fxFor(e);
+    // every successful command casts: rune circle underfoot + a light flash
+    const mcol = kind && kind.startsWith('proj:') ? kind.slice(5) : (MAGIC_COLORS[kind] || '#67e8f9');
+    this.magicCircle(mcol, this.hero, kind === 'conjure' || kind === 'write' ? 1.9 : 1.5, 0.8);
+    this.flashAt(mcol, this.hero, 1.7, 0.45);
     const side = this.heroFxPoint(-56, 4);
     if (kind === 'scan') {
       this.spawn('fx-ring', side.x, side.y, 'width:60px;height:60px', 950);
@@ -577,7 +670,14 @@ class Stage3D {
     }
   }
 
-  cast() { this._ensureHero(); this.hero.play('cast', 0.45); this.burst(this.hero, '#fcd34d', 10); }
+  cast() {
+    this._ensureHero();
+    this.hero.play('cast', 0.45);
+    this.burst(this.hero, '#fcd34d', 10);
+    // task complete: a big golden seal blooms under the hero
+    this.magicCircle('#fcd34d', this.hero, 2.3, 1.1);
+    this.flashAt('#fcd34d', this.hero, 2.4, 0.6);
+  }
 
   // ---- DOM overlay helpers (projected from 3D anchors) ---------------------
   _project(v) {

@@ -150,6 +150,37 @@ export function glowTexture(inner = 'rgba(255,255,255,1)', outer = 'rgba(255,255
   return makeTexture(cv);
 }
 
+// ---- magic rune circle (casting FX) ----------------------------------------
+// White strokes on transparent; tinted per-spell via material color.
+export function runeTexture(size = 256) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const ctx = cv.getContext('2d');
+  const c = size / 2;
+  ctx.strokeStyle = 'rgba(255,255,255,1)';
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.arc(c, c, c - 12, 0, 7); ctx.stroke();
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(c, c, c - 46, 0, 7); ctx.stroke();
+  ctx.lineWidth = 6;
+  for (let i = 0; i < 16; i++) { // radial ticks between the rings
+    const a = (i / 16) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(c + Math.cos(a) * (c - 42), c + Math.sin(a) * (c - 42));
+    ctx.lineTo(c + Math.cos(a) * (c - 18), c + Math.sin(a) * (c - 18));
+    ctx.stroke();
+  }
+  ctx.lineWidth = 5;
+  for (let i = 0; i < 4; i++) { // diamond glyphs
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    const x = c + Math.cos(a) * (c - 70), y = c + Math.sin(a) * (c - 70);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 14); ctx.lineTo(x + 14, y); ctx.lineTo(x, y + 14); ctx.lineTo(x - 14, y);
+    ctx.closePath(); ctx.stroke();
+  }
+  return makeTexture(cv);
+}
+
 // ---- shared value-noise (dissolve, M3) -------------------------------------
 export function noiseTexture(size = 128) {
   const cv = document.createElement('canvas');

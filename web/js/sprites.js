@@ -7,52 +7,69 @@
   // renders at the same size (renderers divide the draw scale by res).
   CLIQ.sprites = {
     hero: {
-      res: 2,
+      // Octopath-style proportions: tall and slim (head ≈ 29%), hooded, caped,
+      // muted palette. res 2.4 keeps the on-screen size close to the old hero.
+      res: 2.4,
       palette: {
-        H: '#3b82f6', h: '#1e40af',            // cap (class-tinted)
-        F: '#fcd9b8', f: '#e8b892',            // skin + shade
-        E: '#0f172a',                          // outline + eyes
-        A: '#94a3b8', a: '#64748b', t: '#cbd5e1', // armor, shade, highlight
-        S: '#e2e8f0', s: '#ffffff',            // blade + shine
-        y: '#d4a017',                          // sword guard & pommel
-        L: '#475569', l: '#334155',            // trousers + shade
-        G: '#92400e', g: '#6b2f0a',            // boots + shade
+        H: '#3b82f6', h: '#1e40af',               // hood (class-tinted)
+        F: '#e8c39a', f: '#c99b72',               // skin + shade
+        E: '#0f172a',                             // outline + eyes
+        A: '#8a94a6', a: '#5b6472', t: '#c3cad6', // tunic, shade, highlight
+        R: '#7a3b46', r: '#5a2a34',               // cape edges
+        S: '#dfe5ec', s: '#ffffff',               // blade + shine
+        y: '#d4a017',                             // belt, guard & pommel
+        L: '#4a5261', l: '#353b47',               // trousers + shade
+        G: '#6e4a2f', g: '#52351f',               // boots + shade
       },
       px: [
-        '............EEEEEEEE............',
-        '..........EEHHHHHHHHEE..........',
-        '.........EHHHHHHHHHHHHE.........',
-        '........EHHHHHHHHHHHHHHE........',
-        '........EHHHHHhhhhHHHHHE........',
-        '........EHhhhhhhhhhhhhHE........',
-        '.......EhhhhhhhhhhhhhhhhE.......',
-        '.......EEEEEEEEEEEEEEEEEE.......',
-        '.........EFFFFFFFFFFFFE.........',
-        '.........EFFFFFFFFFFFFE.........',
-        '.........EFFEEFFFFEEFFE.........',
-        '.....s...EFFEEFFFFEEFFE.........',
-        '....Ss...EFFFFFFFFFFFFE.........',
-        '....Ss...EFfFFFFFFFFfFE.........',
-        '....Ss...EFFFfffffFFFFE.........',
-        '....Ss....EFFFFFFFFFFE..........',
-        '....Ss..EAAAAAAAAAAAAAAE........',
-        '....Ss.EAAtAAAAAAAAAAtAAE.......',
-        '....Ss.EAaAAAAAAAAAAAAaAE.......',
-        '....Ss.EAaAAAAAAAAAAAAaAE.......',
-        '....Ss.EAaAAAAAAAAAAAAaAE.......',
-        '....Ss.EAaAAAAAAAAAAAAaAE.......',
-        '....Ss.EFaAAAAAAAAAAAAaAE.......',
-        '...yyyyEEAAAAAAAAAAAAAAEE.......',
-        '....y....EAAAAAAAAAAAAE.........',
-        '.........EaaaaaaaaaaaaE.........',
-        '.........ELLLLE..ELLLLE.........',
-        '.........ELlLLE..ELLlLE.........',
-        '.........ELlLLE..ELLlLE.........',
-        '.........ELlLLE..ELLlLE.........',
-        '........EGGGGGE..EGGGGGE........',
-        '........EGgGGGE..EGGgGGE........',
-        '........EGGGGGE..EGGGGGE........',
-        '........EEEEEEE..EEEEEEE........',
+        '.............EEEEEE.............',
+        '...........EEHHHHHHEE...........',
+        '..........EHHHHHHHHHHE..........',
+        '..........EHHHHhhHHHHE..........',
+        '..........EHhhhhhhhhHE..........',
+        '..........EEhhhhhhhhEE..........',
+        '..........EFFFFFFFFFFE..........',
+        '..........EFFFFFFFFFFE..........',
+        '..........EFEEFFFFEEFE..........',
+        '..........EFFFFFFFFFFE..........',
+        '..........EFfFFFFFFfFE..........',
+        '..........EFFffffffFFE..........',
+        '......s....EFFFFFFFFE...........',
+        '.....Ss.....EEEEEEEE............',
+        '.....Ss.EEAAAAAAAAAAAAEE........',
+        '.....SsERAAtAAAAAAAAtAARE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsERaAyyyyyyyyyyAaRE.......',
+        '.....SsERaAAAAAAAAAAAAaRE.......',
+        '.....SsEFfAAAAAAAAAAAAaRE.......',
+        '....yyyy..EaAAAAAAAAaE..........',
+        '.....yy....EaaaaaaaaaaE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELLLE...ELLLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELLLE...ELLLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELLLE...ELLLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELLLE...ELLLE.........',
+        '..........ELlLE...ELlLE.........',
+        '..........ELlLE...ELlLE.........',
+        '.........EGGGGE...EGGGGE........',
+        '.........EGgGGE...EGGgGE........',
+        '.........EGGGGE...EGGGGE........',
+        '.........EGgGGE...EGGgGE........',
+        '.........EGGGGE...EGGGGE........',
+        '.........EGGGGE...EGGGGE........',
+        '.........EEEEEE...EEEEEE........',
       ],
     },
 
