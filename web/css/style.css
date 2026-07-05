@@ -900,7 +900,15 @@ body {
   }
   #sidebar.open { transform: none; }
   #stage { flex-basis: 56%; }
-  .dialog-box { max-height: 48%; }
+  /* Stack the dialog UNDER the scene instead of overlaying it — on a phone the
+     stage is too small to share with the FF-style overlay. */
+  .stage-viewport { position: relative; inset: auto; flex: 1 1 auto; min-height: 0; }
+  .dialog-box {
+    position: relative; left: auto; right: auto; bottom: auto;
+    flex: 0 0 auto;
+    margin: 6px 8px 8px;
+    max-height: 46%;
+  }
   /* iOS Safari auto-zooms the viewport when focusing inputs under 16px */
   #term-input, #term-prompt { font-size: 16px; }
 }

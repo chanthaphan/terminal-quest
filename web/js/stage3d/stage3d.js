@@ -39,7 +39,7 @@ function reducedMotion() {
 const CAM = { x: 0, y: 3.2, z: 11, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 28 };
 const CAM_NARROW = { x: 0, y: 3.2, z: 12.5, lookX: 0, lookY: -0.6, lookZ: -2.5, fov: 34 };
 // Overworld framing: higher and wider to take in the winding path of landmarks.
-const WORLD_CAM = { x: 0, y: 7.5, z: 18, lookX: 0, lookY: 0.5, lookZ: -5, fov: 28 };
+const WORLD_CAM = { x: 0, y: 8.2, z: 21, lookX: 0, lookY: 0.5, lookZ: -5, fov: 28 };
 const WORLD_CAM_NARROW = { x: 0, y: 9, z: 26, lookX: 0, lookY: 0.5, lookZ: -5, fov: 40 };
 const HERO_POS = [1.8, 0, -2.0];
 const ENEMY_POS = [-1.9, 0, -2.0];
@@ -114,7 +114,9 @@ class Stage3D {
 
       this._resize();
       this._ro = new ResizeObserver(() => this._resize());
-      this._ro.observe(root);
+      // observe the viewport, not #stage: on phones the dialog stacks below the
+      // scene inside #stage, so the drawable area changes when dialog content does
+      this._ro.observe(this.els.viewport);
 
       this._onVis = () => { document.hidden ? this._stop() : this._start(); };
       document.addEventListener('visibilitychange', this._onVis);
@@ -144,9 +146,18 @@ class Stage3D {
   // actors so they stay in frame on narrow screens.
   _applyView() {
     const world = this.sceneId === 'world';
-    this._view = world
-      ? (this._narrow ? WORLD_CAM_NARROW : WORLD_CAM)
-      : (this._narrow ? CAM_NARROW : CAM);
+    if (world) {
+      // Solve the camera distance so the outermost landmarks (at ±0.42·spread)
+      // project inside the frame at any aspect. 0.94 ≈ pitch correction; +1.3
+      // world units of icon margin; landmarks sit around z ≈ -7.
+      const fov = this._narrow ? 40 : 28;
+      const spread = this._narrow ? 19 : 30;
+      const edge = 0.42 * spread + 1.3;
+      const z = Math.max(16, edge / (0.94 * Math.tan((fov * Math.PI) / 360) * this.camera.aspect) - 7);
+      this._view = { x: 0, y: 8.2 * (z / 21), z, lookX: 0, lookY: 0.5, lookZ: -5, fov };
+    } else {
+      this._view = this._narrow ? CAM_NARROW : CAM;
+    }
     this.camera.fov = this._view.fov;
     this.camera.updateProjectionMatrix();
     if (!world && !this.traveling) {
