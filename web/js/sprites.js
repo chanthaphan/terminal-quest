@@ -3,30 +3,56 @@
   const CLIQ = window.CLIQ;
 
   // Each sprite: rows of characters ('.' = transparent) + a palette map.
+  // `res` = art resolution multiplier: a res-2 sprite has twice the pixels but
+  // renders at the same size (renderers divide the draw scale by res).
   CLIQ.sprites = {
     hero: {
+      res: 2,
       palette: {
-        H: '#3b82f6', h: '#1e40af', F: '#fcd9b8', E: '#0f172a',
-        A: '#94a3b8', a: '#64748b', S: '#e2e8f0', L: '#475569', G: '#92400e',
+        H: '#3b82f6', h: '#1e40af',            // cap (class-tinted)
+        F: '#fcd9b8', f: '#e8b892',            // skin + shade
+        E: '#0f172a',                          // outline + eyes
+        A: '#94a3b8', a: '#64748b', t: '#cbd5e1', // armor, shade, highlight
+        S: '#e2e8f0', s: '#ffffff',            // blade + shine
+        y: '#d4a017',                          // sword guard & pommel
+        L: '#475569', l: '#334155',            // trousers + shade
+        G: '#92400e', g: '#6b2f0a',            // boots + shade
       },
       px: [
-        '......HHHH......',
-        '.....HHHHHH.....',
-        '.....HhhhhH.....',
-        '.....FFFFFF.....',
-        '.....FEFFEF.....',
-        '.....FFFFFF.....',
-        '......FFFF......',
-        '....AAAAAAAA....',
-        '...AAAAAAAAAA...',
-        '..SaAAAAAAAAa...',
-        '..S.AAAAAAAA....',
-        '..S.AAAAAAAA....',
-        '..S..AAAAAA.....',
-        '..S...LLLL......',
-        '......LL.LL.....',
-        '......LL.LL.....',
-        '.....GGG.GGG....',
+        '............EEEEEEEE............',
+        '..........EEHHHHHHHHEE..........',
+        '.........EHHHHHHHHHHHHE.........',
+        '........EHHHHHHHHHHHHHHE........',
+        '........EHHHHHhhhhHHHHHE........',
+        '........EHhhhhhhhhhhhhHE........',
+        '.......EhhhhhhhhhhhhhhhhE.......',
+        '.......EEEEEEEEEEEEEEEEEE.......',
+        '.........EFFFFFFFFFFFFE.........',
+        '.........EFFFFFFFFFFFFE.........',
+        '.........EFFEEFFFFEEFFE.........',
+        '.....s...EFFEEFFFFEEFFE.........',
+        '....Ss...EFFFFFFFFFFFFE.........',
+        '....Ss...EFfFFFFFFFFfFE.........',
+        '....Ss...EFFFfffffFFFFE.........',
+        '....Ss....EFFFFFFFFFFE..........',
+        '....Ss..EAAAAAAAAAAAAAAE........',
+        '....Ss.EAAtAAAAAAAAAAtAAE.......',
+        '....Ss.EAaAAAAAAAAAAAAaAE.......',
+        '....Ss.EAaAAAAAAAAAAAAaAE.......',
+        '....Ss.EAaAAAAAAAAAAAAaAE.......',
+        '....Ss.EAaAAAAAAAAAAAAaAE.......',
+        '....Ss.EFaAAAAAAAAAAAAaAE.......',
+        '...yyyyEEAAAAAAAAAAAAAAEE.......',
+        '....y....EAAAAAAAAAAAAE.........',
+        '.........EaaaaaaaaaaaaE.........',
+        '.........ELLLLE..ELLLLE.........',
+        '.........ELlLLE..ELLlLE.........',
+        '.........ELlLLE..ELLlLE.........',
+        '.........ELlLLE..ELLlLE.........',
+        '........EGGGGGE..EGGGGGE........',
+        '........EGgGGGE..EGGgGGE........',
+        '........EGGGGGE..EGGGGGE........',
+        '........EEEEEEE..EEEEEEE........',
       ],
     },
 
@@ -260,7 +286,7 @@
   CLIQ.heroSprite = function (classId) {
     const base = CLIQ.sprites.hero;
     const cls = CLIQ.classDefs.find((c) => c.id === classId);
-    let sprite = cls ? { px: base.px, palette: Object.assign({}, base.palette, cls.tint) } : base;
+    let sprite = cls ? { px: base.px, palette: Object.assign({}, base.palette, cls.tint), res: base.res } : base;
     // conquest gear (js/gear.js) is painted on top for every renderer
     if (CLIQ.applyGear) sprite = CLIQ.applyGear(sprite);
     return sprite;
@@ -270,17 +296,25 @@
     const rows = sprite.px;
     const w = Math.max(...rows.map((r) => r.length));
     const h = rows.length;
-    canvas.width = w * scale;
-    canvas.height = h * scale;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const res = sprite.res || 1; // hi-res art renders at the same on-screen size
+    // rasterize 1px per cell, then scale with nearest-neighbor for crisp pixels
+    const buf = document.createElement('canvas');
+    buf.width = w;
+    buf.height = h;
+    const bctx = buf.getContext('2d');
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < rows[y].length; x++) {
         const c = sprite.palette[rows[y][x]];
         if (!c) continue;
-        ctx.fillStyle = c;
-        ctx.fillRect(x * scale, y * scale, scale, scale);
+        bctx.fillStyle = c;
+        bctx.fillRect(x, y, 1, 1);
       }
     }
+    canvas.width = Math.max(1, Math.round((w * scale) / res));
+    canvas.height = Math.max(1, Math.round((h * scale) / res));
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(buf, 0, 0, canvas.width, canvas.height);
   };
 })();

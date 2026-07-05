@@ -20,57 +20,61 @@
     V: '#c084fc', // aura of the nine
   };
 
-  // px overlays: [row, col, paletteChar] on the 16×17 hero matrix.
+  // px overlay helpers: build [row, col, paletteChar] lists on the 32×34 hero.
+  const colRun = (c, r0, r1, ch) => { const a = []; for (let r = r0; r <= r1; r++) a.push([r, c, ch]); return a; };
+  const rowRun = (r, c0, c1, ch) => { const a = []; for (let c = c0; c <= c1; c++) a.push([r, c, ch]); return a; };
+  const rect = (r0, r1, c0, c1, ch) => { const a = []; for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) a.push([r, c, ch]); return a; };
+
   CLIQ.gearDefs = {
     bash: {
       name: '🗡 Gilded Blade', perk: 'xp',
       desc: 'Your blade gleams gold. +5% XP from every deed.',
-      px: [[8, 2, 'B'], [9, 2, 'B'], [10, 2, 'B'], [11, 2, 'B'], [12, 2, 'B'], [13, 2, 'B']],
+      px: [...colRun(4, 12, 22, 'B'), ...colRun(5, 11, 22, 'B')],
     },
     remote: {
       name: '🛡 Echo Shield', perk: 'shield',
       desc: 'Forged from a silent server\'s hull. Blocks the first heart you would lose in each boss fight.',
-      px: [[9, 13, 'D'], [10, 13, 'D'], [11, 13, 'D'], [12, 13, 'D'], [10, 12, 'D'], [11, 12, 'D']],
+      px: [...colRun(25, 17, 23, 'D'), ...colRun(26, 18, 22, 'D')],
     },
     concepts: {
       name: '🧭 Wayfinder Charm', perk: 'heart',
       desc: 'You always know the way home. +1 heart in every boss fight.',
-      px: [[8, 7, 'N'], [8, 8, 'N']],
+      px: [[19, 15, 'N'], [19, 16, 'N'], [20, 15, 'N'], [20, 16, 'N']],
     },
     azure: {
       name: '☁️ Skyforged Pauldrons', perk: 'xp',
       desc: 'Cloud-metal shoulders. +5% XP from every deed.',
-      px: [[7, 4, 'P'], [7, 5, 'P'], [8, 3, 'P'], [7, 10, 'P'], [7, 11, 'P'], [8, 12, 'P']],
+      px: [...rowRun(16, 8, 11, 'P'), ...rowRun(16, 20, 23, 'P'), [17, 8, 'P'], [17, 9, 'P'], [17, 22, 'P'], [17, 23, 'P']],
     },
     k8s: {
       name: '⚙️ Warden\'s Greaves', perk: 'regen',
       desc: 'Self-healing boots. Clear 3 boss tasks without losing a heart to regain one.',
-      px: [[14, 6, 'K'], [14, 7, 'K'], [14, 9, 'K'], [14, 10, 'K'], [15, 6, 'K'], [15, 7, 'K'], [15, 9, 'K'], [15, 10, 'K']],
+      px: [...rect(30, 32, 9, 13, 'K'), ...rect(30, 32, 18, 22, 'K')],
     },
     git: {
       name: '📜 Chronicler\'s Quill', perk: 'streak',
       desc: 'It writes your legend as you go. Every 5th task in a row without a mistake pays +10 bonus XP.',
-      px: [[5, 12, 'Q'], [6, 12, 'Q'], [7, 12, 'Q']],
+      px: [[10, 27, 'Q'], [11, 26, 'Q'], [12, 26, 'Q'], [13, 26, 'Q'], [14, 26, 'Q']],
     },
     docker: {
       name: '🔥 Emberforged Gauntlets', perk: 'xp',
       desc: 'Still warm from the foundry. +5% XP from every deed.',
-      px: [[10, 3, 'O'], [11, 3, 'O'], [10, 11, 'O'], [11, 11, 'O']],
+      px: [[20, 8, 'O'], [21, 8, 'O'], [22, 8, 'O'], [20, 23, 'O'], [21, 23, 'O'], [22, 23, 'O']],
     },
     ops: {
       name: '⚗️ Alchemist\'s Talisman', perk: 'voidhints',
       desc: 'Distilled understanding. Hints in the Void no longer cost hearts.',
-      px: [[13, 7, 'M'], [13, 8, 'M']],
+      px: rowRun(25, 14, 17, 'M'),
     },
     final: {
       name: '👑 Archmage\'s Crown', perk: 'crown',
       desc: 'The Nine Realms kneel. +10% XP from every deed.',
-      px: [[0, 5, 'C'], [0, 7, 'C'], [0, 8, 'C'], [0, 10, 'C'], [1, 5, 'C'], [1, 6, 'C'], [1, 7, 'C'], [1, 8, 'C'], [1, 9, 'C'], [1, 10, 'C']],
+      px: [[0, 12, 'C'], [0, 14, 'C'], [0, 17, 'C'], [0, 19, 'C'], ...rowRun(1, 11, 20, 'C'), ...rowRun(2, 11, 20, 'C')],
     },
     void: {
       name: '🌀 Aura of the Nine', perk: 'aura',
       desc: 'The Void itself bows. Your legend is complete.',
-      px: [[2, 3, 'V'], [4, 13, 'V'], [9, 0, 'V'], [12, 15, 'V'], [16, 3, 'V'], [6, 1, 'V']],
+      px: [[4, 2, 'V'], [9, 29, 'V'], [15, 1, 'V'], [21, 30, 'V'], [28, 3, 'V'], [31, 28, 'V']],
     },
   };
 
@@ -98,7 +102,7 @@
         if (px[r] && c < px[r].length) px[r][c] = ch;
       }
     }
-    return { palette: Object.assign({}, sprite.palette, GEAR_PALETTE), px: px.map((r) => r.join('')) };
+    return { palette: Object.assign({}, sprite.palette, GEAR_PALETTE), px: px.map((r) => r.join('')), res: sprite.res };
   };
 
   // Aggregated perks for the engine.

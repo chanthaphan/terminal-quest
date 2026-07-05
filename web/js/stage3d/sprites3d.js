@@ -60,7 +60,8 @@ export class Actor {
       },
       vertexShader: SPRITE_VS, fragmentShader: SPRITE_FS, transparent: true, depthWrite: true,
     });
-    this._sizeFor = (scale) => ({ w: w * scale * PX, h: h * scale * PX });
+    const res = sprite.res || 1; // hi-res art keeps the same world size
+    this._sizeFor = (scale) => ({ w: (w * scale * PX) / res, h: (h * scale * PX) / res });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.mat);
     this.mesh.renderOrder = 2;
 

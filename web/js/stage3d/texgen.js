@@ -129,7 +129,8 @@ export function spriteTexture(sprite) {
 export function walkVariant(sprite) {
   const rows = sprite.px.slice();
   const h = rows.length;
-  for (let y = h - 4; y < h; y++) {
+  const legs = Math.max(4, Math.round(h * 0.2)); // scale with sprite resolution
+  for (let y = h - legs; y < h; y++) {
     const r = rows[y];
     if (!r) continue;
     rows[y] = (y % 2 ? ' ' + r : r.slice(1) + ' ');
