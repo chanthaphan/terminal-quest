@@ -281,11 +281,25 @@ class Stage3D {
   cameraShake(ms) { this._shakeUntil = this.clock.elapsedTime + ms / 1000; }
 
   // ---- scene ---------------------------------------------------------------
+  _heroSig() {
+    return this.heroClass + '|' + (window.CLIQ.gearSig ? window.CLIQ.gearSig() : '');
+  }
+
   _ensureHero() {
+    // rebuild when the class tint or the equipped conquest gear changes,
+    // keeping the actor exactly where it stood
+    let keepPos = null, keepScale = null;
+    if (this.hero && this._heroBuiltSig !== this._heroSig()) {
+      keepPos = this.hero.group.position.clone();
+      keepScale = this.hero.scale;
+      this.scene.remove(this.hero.group); this.hero.dispose(); this.hero = null;
+    }
     if (this.hero) return;
-    this.hero = new Actor(window.CLIQ.heroSprite(this.heroClass), this.heroScale || 7, true);
-    this.hero.setPosition(HERO_POS[0], HERO_POS[1], HERO_POS[2]);
+    this.hero = new Actor(window.CLIQ.heroSprite(this.heroClass), keepScale || this.heroScale || 7, true);
+    if (keepPos) this.hero.group.position.copy(keepPos);
+    else this.hero.setPosition(HERO_POS[0], HERO_POS[1], HERO_POS[2]);
     this.scene.add(this.hero.group);
+    this._heroBuiltSig = this._heroSig();
   }
 
   _disposeScenery() {
@@ -446,8 +460,9 @@ class Stage3D {
     if (this.enemy) this.enemy.setVisible(true);
     this.els.plates.hidden = false;
     this.els.plates.querySelector('.enemy-fill').style.width = Math.round(enemyPct * 100) + '%';
-    this.els.plates.querySelector('.hero-fill').style.width = Math.round((hearts / 3) * 100) + '%';
-    this.els.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(3 - hearts);
+    const maxH = (window.CLIQ.game && window.CLIQ.game.maxHearts) ? window.CLIQ.game.maxHearts() : 3;
+    this.els.plates.querySelector('.hero-fill').style.width = Math.round((hearts / maxH) * 100) + '%';
+    this.els.plates.querySelector('.hp-hearts').textContent = '❤'.repeat(hearts) + '♡'.repeat(Math.max(0, maxH - hearts));
     if (won && !this.dissolved) {
       this.dissolved = true;
       if (this.enemy) this._dissolveEnemy();

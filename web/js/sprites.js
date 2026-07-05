@@ -260,8 +260,10 @@
   CLIQ.heroSprite = function (classId) {
     const base = CLIQ.sprites.hero;
     const cls = CLIQ.classDefs.find((c) => c.id === classId);
-    if (!cls) return base;
-    return { px: base.px, palette: Object.assign({}, base.palette, cls.tint) };
+    let sprite = cls ? { px: base.px, palette: Object.assign({}, base.palette, cls.tint) } : base;
+    // conquest gear (js/gear.js) is painted on top for every renderer
+    if (CLIQ.applyGear) sprite = CLIQ.applyGear(sprite);
+    return sprite;
   };
 
   CLIQ.drawSprite = function (canvas, sprite, scale) {
