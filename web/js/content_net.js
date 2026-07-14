@@ -21,8 +21,8 @@
         tasks: [
           {
             text: 'Ask the machine its name: <code>hostname</code>.',
-            hint: 'Type: <code>hostname</code>',
-            check: (e) => e.cmd === 'hostname' && e.ok,
+            hint: 'Type: <code>hostname</code> (also true: <code>echo $HOSTNAME</code>, <code>uname -n</code>, <code>cat /etc/hostname</code>)',
+            check: (e) => e.ok && ['hostname', 'echo', 'uname', 'cat'].includes(e.cmd) && e.out.includes(e.world.hostname),
           },
           {
             text: 'Reveal your network interfaces and IP address: <code>ip addr</code>.',

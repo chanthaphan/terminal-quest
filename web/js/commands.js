@@ -34,6 +34,11 @@
   C.pwd = (a, w) => ok(w.cwd + '\n');
 
   C.whoami = (a, w) => ok(w.user + '\n');
+  C.uname = (a, w) => {
+    if (a.includes('-n')) return ok(w.hostname + '\n');
+    if (a.includes('-a')) return ok(`Linux ${w.hostname} 6.8.0-quest #1 SMP x86_64 GNU/Linux\n`);
+    return ok('Linux\n');
+  };
   C.hostname = (a, w) => {
     if (a.includes('-I') || a.includes('-i')) return ok((w.sshStack.length ? w.net.hosts[w.hostname].ip : w.net.localIp) + '\n');
     return ok(w.hostname + '\n');
@@ -409,7 +414,7 @@
     '  Network  : ping traceroute dig nslookup curl ssh scp exit netstat ss ip nc systemctl\n' +
     '  Azure    : az login | az group | az vm | az storage | az aks\n' +
     '  K8s      : kubectl get|describe|logs|scale|delete|rollout|set|config\n' +
-    '  Misc     : whoami hostname history man clear help\n'
+    '  Misc     : whoami hostname uname history man clear help\n'
   );
 
   // ---- Network / remote ---------------------------------------------------

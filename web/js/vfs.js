@@ -139,6 +139,7 @@
       }),
       etc: dir({
         hosts: file('127.0.0.1 localhost\n10.0.1.10 web-01\n10.0.2.5 db-01\n'),
+        'hostname': file('sanctum\n'),
         'motd': file('Realm of the Terminal Quest\n'),
       }),
       var: dir({ log: dir({ 'syslog': file('system boot ok\n') }) }),

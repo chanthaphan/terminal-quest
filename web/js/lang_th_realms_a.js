@@ -26,7 +26,8 @@
       'ก่อนจะข้ามสะพานไปยังเครื่องอื่น จงรู้จักเครื่องของตนเอง ทุกเครื่องบนเครือข่ายมี <b>IP address</b> (ที่อยู่บ้านของมัน) และส่งทราฟฟิกออกสู่โลกกว้างผ่าน <b>gateway</b>',
     'You know your name, your address, and your road out.': 'เจ้ารู้ชื่อ รู้ที่อยู่ และรู้เส้นทางออกของตนเองแล้ว',
     'Ask the machine its name: <code>hostname</code>.': 'ถามชื่อเครื่อง: <code>hostname</code>',
-    'Type: <code>hostname</code>': 'พิมพ์: <code>hostname</code>',
+    'Type: <code>hostname</code> (also true: <code>echo $HOSTNAME</code>, <code>uname -n</code>, <code>cat /etc/hostname</code>)':
+      'พิมพ์: <code>hostname</code> (วิธีอื่นที่ได้คำตอบจริงเหมือนกัน: <code>echo $HOSTNAME</code>, <code>uname -n</code>, <code>cat /etc/hostname</code>)',
     'Reveal your network interfaces and IP address: <code>ip addr</code>.': 'เปิดเผยอินเทอร์เฟซเครือข่ายและ IP address ของเจ้า: <code>ip addr</code>',
     'Type: <code>ip addr</code> (old-timers use <code>ifconfig</code> — both work here)': 'พิมพ์: <code>ip addr</code> (รุ่นเก๋าใช้ <code>ifconfig</code> — ใช้ได้ทั้งคู่)',
     'eth0 carries 10.0.1.5/24 — that is you. (lo 127.0.0.1 is the loopback: the machine talking to itself.)':
