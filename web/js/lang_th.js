@@ -206,7 +206,7 @@
     'The bestiary lists beasts and lairs. Find all <b>dragon</b> lines: <code>grep dragon scrolls/beasts.txt</code>.':
       'ตำราอสูรบันทึกสัตว์ร้ายและรังของมัน จงหาบรรทัด <b>dragon</b> ทั้งหมด: <code>grep dragon scrolls/beasts.txt</code>',
     'Type: <code>grep dragon scrolls/beasts.txt</code>': 'พิมพ์: <code>grep dragon scrolls/beasts.txt</code>',
-    'How many dragons? Count matches with the <code>-c</code> flag.': 'มีมังกรกี่ตัว? นับจำนวนที่พบด้วยแฟล็ก <code>-c</code>',
+    'How many dragons? Count matching lines with the <code>-c</code> flag.': 'มีมังกรกี่ตัว? นับจำนวน "บรรทัด" ที่พบด้วยแฟล็ก <code>-c</code>',
     'Type: <code>grep -c dragon scrolls/beasts.txt</code>': 'พิมพ์: <code>grep -c dragon scrolls/beasts.txt</code>',
     'Three dragons. -c counts matching lines.': 'มังกรสามตัว — แฟล็ก -c นับบรรทัดที่ตรงเงื่อนไข',
     'The quest ledger logged failures. Show ERROR lines <i>with line numbers</i>: <code>grep -n ERROR library/ledger.log</code>.':
@@ -214,7 +214,7 @@
     'Type: <code>grep -n ERROR library/ledger.log</code>': 'พิมพ์: <code>grep -n ERROR library/ledger.log</code>',
     'Peek at just the first 2 lines of the ledger with <code>head -n 2 library/ledger.log</code>. (<code>tail</code> shows the end.)':
       'แอบดูแค่ 2 บรรทัดแรกของสมุดบันทึกด้วย <code>head -n 2 library/ledger.log</code> (ส่วน <code>tail</code> แสดงท้ายไฟล์)',
-    'Type: <code>head -n 2 library/ledger.log</code>': 'พิมพ์: <code>head -n 2 library/ledger.log</code>',
+    'Type: <code>head -n 2 library/ledger.log</code> (the shorthand <code>head -2</code> works too)': 'พิมพ์: <code>head -n 2 library/ledger.log</code>',
     'Measure the bestiary: <code>wc -l scrolls/beasts.txt</code> counts its lines.': 'วัดขนาดตำราอสูร: <code>wc -l scrolls/beasts.txt</code> นับจำนวนบรรทัด',
     'Type: <code>wc -l scrolls/beasts.txt</code>': 'พิมพ์: <code>wc -l scrolls/beasts.txt</code>',
 
@@ -255,11 +255,18 @@
     'read + write + execute': 'อ่าน + เขียน + รันได้',
     'no access at all': 'ไม่มีสิทธิ์ใด ๆ เลย',
     'The first triplet rw- is the owner: read yes, write yes, execute no.': 'ชุดแรก rw- คือของเจ้าของ: อ่านได้ เขียนได้ รันไม่ได้',
-    'Grant the execute permission so the script can run: <code>chmod +x crypt/locked.sh</code> (or <code>chmod 755</code>).':
-      'มอบสิทธิ์รันให้สคริปต์ทำงานได้: <code>chmod +x crypt/locked.sh</code> (หรือ <code>chmod 755</code>)',
+    'Try to run it directly: <code>./crypt/locked.sh</code> — and watch the gate refuse you.':
+      'ลองรันมันตรง ๆ: <code>./crypt/locked.sh</code> — แล้วดูประตูปฏิเสธเจ้า',
+    'Type: <code>./crypt/locked.sh</code> — the leading <code>./</code> means "this file, right here"':
+      'พิมพ์: <code>./crypt/locked.sh</code> — เครื่องหมาย <code>./</code> นำหน้าแปลว่า "ไฟล์นี้ ตรงนี้แหละ"',
+    'Permission denied — you can read the scroll, but not CAST it. The execute bit is missing.':
+      'Permission denied — เจ้าอ่านม้วนคาถาได้ แต่ "ร่าย" ไม่ได้ เพราะขาดสิทธิ์ execute',
+    'Grant the execute permission: <code>chmod +x crypt/locked.sh</code> (or <code>chmod 755 crypt/locked.sh</code>).':
+      'มอบสิทธิ์รัน: <code>chmod +x crypt/locked.sh</code> (หรือ <code>chmod 755 crypt/locked.sh</code>)',
     'Type: <code>chmod +x crypt/locked.sh</code>': 'พิมพ์: <code>chmod +x crypt/locked.sh</code>',
-    'Now run it: <code>bash crypt/locked.sh</code>.': 'ทีนี้รันมัน: <code>bash crypt/locked.sh</code>',
-    'Type: <code>bash crypt/locked.sh</code>': 'พิมพ์: <code>bash crypt/locked.sh</code>',
+    'Now run it again: <code>./crypt/locked.sh</code>.': 'ทีนี้รันมันอีกครั้ง: <code>./crypt/locked.sh</code>',
+    'Type: <code>./crypt/locked.sh</code> (running via <code>bash crypt/locked.sh</code> works too — but that needs only READ permission, not execute)':
+      'พิมพ์: <code>./crypt/locked.sh</code> (รันผ่าน <code>bash crypt/locked.sh</code> ก็ได้ — แต่แบบนั้นใช้แค่สิทธิ์อ่าน ไม่ใช่ execute)',
     'One last question before the gate opens:': 'คำถามสุดท้ายก่อนประตูจะเปิด:',
     'chmod <code>755</code> gives a file which permissions?': 'chmod <code>755</code> ให้สิทธิ์แบบใดแก่ไฟล์?',
     'owner rwx, group r-x, others r-x': 'เจ้าของ rwx, กลุ่ม r-x, คนอื่น r-x',

@@ -201,9 +201,9 @@
             check: (e) => e.world.hostname === 'web-01',
           },
           {
-            text: 'List its open gates: <code>ss</code> (or <code>netstat</code>).',
-            hint: 'Type: <code>ss</code>',
-            check: (e) => (e.cmd === 'ss' || e.cmd === 'netstat') && e.out.includes(':80'),
+            text: 'List its LISTENING gates: <code>ss -tln</code> (or <code>netstat -tln</code>). The <code>-l</code> is the key — without it, real ss shows only established connections, not listeners.',
+            hint: 'Type: <code>ss -tln</code> (-t TCP, -l listening, -n numeric ports)',
+            check: (e) => (e.cmd === 'ss' || e.cmd === 'netstat') && e.argv.some((x) => /^-[a-z]*l/.test(x)) && e.out.includes(':80'),
             success: 'Gate 22 (sshd) and gate 80 (nginx) stand open, LISTENing.',
           },
           {

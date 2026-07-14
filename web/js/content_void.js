@@ -60,7 +60,7 @@
           w.docker.containers.push({
             id: 'c0ffee0666' + w.docker.serial, name: 'void-portal', image: 'quest/portal:2.0',
             status: 'Exited (1) 66 minutes ago', hostPort: null, ctrPort: null,
-            logs: 'Starting Quest Portal...\nFATAL: port 80 must be published to a host port (run with -p HOST:80)\nprocess exited with code 1\n',
+            logs: 'Starting Quest Portal...\nFATAL: PORTAL_KEY is not set — the portal cannot start (run with -e PORTAL_KEY=<key>)\nprocess exited with code 1\n',
           });
           // 6) war room for the runbook
           const home = N(w, '/home/hero');
@@ -97,7 +97,7 @@
           },
           {
             text: 'You cannot rebuild the DNS zone from here — but you CAN override locally. Append an emergency entry mapping <code>203.0.113.10</code> to <code>quest.dev</code> into <code>/etc/hosts</code>.',
-            hint: 'Type: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — remember, /etc/hosts is checked before DNS!',
+            hint: 'Type: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — checked before DNS! (On a real system this file is root-owned: you\'d write it with <code>echo "..." | sudo tee -a /etc/hosts</code>, since <code>sudo echo &gt;&gt;</code> redirects in YOUR unprivileged shell.)',
             check: (e) => { const h = N(e.world, '/etc/hosts'); return h && /203\.0\.113\.10\s+quest\.dev/.test(h.content); },
             success: 'The resolver will now find quest.dev locally. (Real fix later: repair the zone — note it for the runbook.)',
           },
@@ -146,8 +146,8 @@
           {
             text: '<b>[CLUSTER]</b> The shop ward burns again. Diagnose the poisoned deployment — find the evidence in its Events or logs.',
             hint: 'Type: <code>kubectl get pods -n shop</code>, then <code>kubectl describe pod payment-xxxx -n shop</code>',
-            check: (e) => e.cmd === 'kubectl' && (e.argv.includes('describe') || e.argv.includes('logs')) && (e.out.includes('tag not found') || e.out.includes('manifest unknown') || e.out.includes('FATAL')),
-            success: 'Image "shop-payment:2.0-void" does not exist. The Amalgam\'s poison, exposed.',
+            check: (e) => e.cmd === 'kubectl' && (e.argv.includes('describe') || e.argv.includes('logs')) && (e.out.includes('Back-off restarting') || e.out.includes('FATAL')),
+            success: 'Release "shop-payment:2.0-void" crashes on startup. The Amalgam\'s poison, exposed.',
           },
           {
             text: 'Cure it: the true image is <code>shop-payment:2.1</code>. Roll it out and verify.',
@@ -169,7 +169,7 @@
           },
           {
             text: '<b>[CONTAINERS]</b> A fallen container blocks the foundry. Find it, read its last words, clear it, and resummon it correctly on gate 8080.',
-            hint: 'Type: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code>, then <code>docker run -d --name void-portal -p 8080:80 quest/portal:2.0</code>',
+            hint: 'Type: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code>, then <code>docker run -d --name void-portal -p 8080:80 -e PORTAL_KEY=void quest/portal:2.0</code>',
             check: (e) => { const c = e.world.docker.containers.find((x) => x.name === 'void-portal'); return c && c.status.startsWith('Up') && c.hostPort === 8080; },
             success: 'The portal golem stands. Verify with curl localhost:8080 if you wish. Five heads down.',
           },

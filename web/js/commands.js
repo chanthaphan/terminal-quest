@@ -5,7 +5,8 @@
   const { getNode, getParent, normalize, file, dir } = CLIQ;
 
   const ok = (out) => ({ out: out || '', code: 0 });
-  const err = (out) => ({ out: out || '', code: 1 });
+  // isErr marks stderr-style output: shown to the user, but never piped or redirected
+  const err = (out) => ({ out: out || '', code: 1, isErr: true });
 
   function flags(argv) {
     const f = new Set();
@@ -40,9 +41,8 @@
 
   C.echo = (a, w) => {
     const { f, rest } = flags(a);
-    let s = rest.join(' ');
-    s = s.replace(/\$USER\b/g, w.user).replace(/\$HOME\b/g, w.home).replace(/\$HOSTNAME\b/g, w.hostname);
-    return ok(s + (f.has('n') ? '' : '\n'));
+    // $VAR expansion happens in the tokenizer (quote-aware), exactly like the real shell
+    return ok(rest.join(' ') + (f.has('n') ? '' : '\n'));
   };
 
   C.ls = (a, w) => {
@@ -50,19 +50,16 @@
     const target = rest[0] || '.';
     const node = getNode(w, target);
     if (!node) return err(`ls: cannot access '${target}': No such file or directory\n`);
-    if (node.type === 'file') return ok(target + '\n');
+    const longLine = (n, name) => `${modeStr(n)} 1 ${w.user} ${w.user} ${String(n.type === 'file' ? n.content.length : 4096).padStart(6)} Jul  4 09:00 ${name}`;
+    if (node.type === 'file') return ok(f.has('l') ? longLine(node, target) + '\n' : target + '\n');
     let names = Object.keys(node.children).sort();
     if (!f.has('a')) names = names.filter((n) => !n.startsWith('.'));
     else names = ['.', '..', ...names];
     if (f.has('l')) {
       const lines = names
         .filter((n) => n !== '.' && n !== '..')
-        .map((n) => {
-          const c = node.children[n];
-          const size = c.type === 'file' ? c.content.length : 4096;
-          return `${modeStr(c)} 1 ${w.user} ${w.user} ${String(size).padStart(6)} Jul  4 09:00 ${n}`;
-        });
-      return ok(lines.join('\n') + (lines.length ? '\n' : ''));
+        .map((n) => longLine(node.children[n], n));
+      return ok(`total ${lines.length * 4}\n` + lines.join('\n') + (lines.length ? '\n' : ''));
     }
     return ok(names.join('  ') + (names.length ? '\n' : ''));
   };
@@ -155,6 +152,7 @@
       const srcName = normalize(w, rest[0]).split('/').filter(Boolean).pop();
       dst.children[srcName] = cloneNode(src);
     } else {
+      if (/\/$/.test(rest[1])) return err(`cp: cannot create regular file '${rest[1]}': Not a directory\n`);
       const { parent, name } = getParent(w, rest[1]);
       if (!parent) return err(`cp: cannot create '${rest[1]}': No such file or directory\n`);
       parent.children[name] = cloneNode(src);
@@ -171,6 +169,7 @@
     const dst = getNode(w, rest[1]);
     if (dst && dst.type === 'dir') dst.children[sn] = src;
     else {
+      if (/\/$/.test(rest[1])) return err(`mv: cannot move '${rest[0]}' to '${rest[1]}': Not a directory\n`);
       const { parent: dp, name: dn } = getParent(w, rest[1]);
       if (!dp) return err(`mv: cannot move to '${rest[1]}': No such file or directory\n`);
       dp.children[dn] = src;
@@ -212,7 +211,7 @@
         } else scanText(n.content, rest.length > 2 || f.has('r') ? p : null);
       }
     } else scanText(stdin || '', null);
-    if (f.has('c')) return ok(results.length + '\n');
+    if (f.has('c')) return { out: results.length + '\n', code: results.length ? 0 : 1 };
     const out = results
       .map((r) => (r.label ? r.label + ':' : '') + (f.has('n') ? r.num + ':' : '') + r.line)
       .join('\n');
@@ -247,6 +246,9 @@
     let n = 10;
     const ni = a.indexOf('-n');
     if (ni >= 0 && a[ni + 1]) { n = parseInt(a[ni + 1], 10) || 10; rest.splice(rest.indexOf(a[ni + 1]), 1); }
+    // classic numeric shorthand: head -5 FILE / tail -2 FILE
+    const short = rest.find((x) => /^-\d+$/.test(x));
+    if (short) { n = parseInt(short.slice(1), 10) || n; rest.splice(rest.indexOf(short), 1); }
     return { n, rest };
   }
   C.head = (a, w, stdin) => {
@@ -285,7 +287,11 @@
     let text = stdin || '';
     if (rest[0]) { const n = getNode(w, rest[0]); if (!n) return err(`sort: cannot read: ${rest[0]}\n`); text = n.content; }
     let lines = text.split('\n').filter((l, i, arr) => !(i === arr.length - 1 && l === ''));
-    lines.sort(f.has('n') ? (x, y) => parseFloat(x) - parseFloat(y) : undefined);
+    lines.sort(
+      f.has('n')
+        ? (x, y) => ((parseFloat(x) || 0) - (parseFloat(y) || 0)) || (x < y ? -1 : x > y ? 1 : 0) // non-numeric lines sort as 0, ties fall back to text — like GNU sort -n
+        : undefined
+    );
     if (f.has('r')) lines.reverse();
     if (f.has('u')) lines = lines.filter((l, i) => i === 0 || l !== lines[i - 1]);
     return ok(lines.join('\n') + '\n');
@@ -321,12 +327,17 @@
     let text = stdin || '';
     if (rest[0]) { const n = getNode(w, rest[0]); if (!n) return err(`cut: ${rest[0]}: No such file\n`); text = n.content; }
     const wanted = new Set();
+    let openFrom = null; // 'N-' means field N to the end of each line
     for (const part of fieldsSpec.split(',')) {
-      if (part.includes('-')) { const [s, e] = part.split('-').map(Number); for (let i = s; i <= e; i++) wanted.add(i); }
-      else wanted.add(Number(part));
+      if (part.includes('-')) {
+        const [s, e] = part.split('-');
+        const from = s === '' ? 1 : Number(s);
+        if (e === '') openFrom = openFrom === null ? from : Math.min(openFrom, from);
+        else for (let i = from; i <= Number(e); i++) wanted.add(i);
+      } else wanted.add(Number(part));
     }
     const lines = text.split('\n').filter((l, i, arr) => !(i === arr.length - 1 && l === ''));
-    const out = lines.map((l) => l.split(delim).filter((_, i) => wanted.has(i + 1)).join(delim));
+    const out = lines.map((l) => l.split(delim).filter((_, i) => wanted.has(i + 1) || (openFrom !== null && i + 1 >= openFrom)).join(delim));
     return ok(out.join('\n') + '\n');
   };
 
@@ -355,11 +366,12 @@
     const lines = n.content.split('\n').filter((l) => l.trim() && !l.startsWith('#'));
     let out = '';
     for (const line of lines) {
-      const r = CLIQ.run(w, line);
+      const r = CLIQ.run(w, line, { noHistory: true }); // script lines don't enter interactive history
       out += r.out;
     }
     return ok(out);
   }
+  CLIQ.runScript = runScript;
 
   C.history = (a, w) => ok(w.history.map((h, i) => `  ${i + 1}  ${h}`).join('\n') + '\n');
 
@@ -436,7 +448,7 @@
     if (host && host.down) {
       let o = `PING ${target} (${ip}) 56(84) bytes of data.\n`;
       o += `\n--- ${target} ping statistics ---\n${count} packets transmitted, 0 received, 100% packet loss\n`;
-      return err(o);
+      return { out: o, code: 1 }; // stats go to stdout even on failure, like real ping
     }
     let o = `PING ${target} (${ip}) 56(84) bytes of data.\n`;
     for (let i = 1; i <= count; i++) o += `64 bytes from ${ip}: icmp_seq=${i} ttl=63 time=${(lat + i * 0.3).toFixed(1)} ms\n`;
@@ -472,7 +484,7 @@
     const name = flags(a).rest[0];
     if (!name) return err('usage: nslookup NAME\n');
     const ip = w.net.dns[name];
-    if (!ip) return err(`Server: 10.0.1.1\n** server can't find ${name}: NXDOMAIN\n`);
+    if (!ip) return { out: `Server: 10.0.1.1\n** server can't find ${name}: NXDOMAIN\n`, code: 1 };
     return ok(`Server:  10.0.1.1\nAddress: 10.0.1.1#53\n\nName:    ${name}\nAddress: ${ip}\n`);
   };
 
@@ -661,7 +673,8 @@
   };
 
   C.kill = (a, w) => {
-    const { rest } = flags(a);
+    // signal specifiers (-9, -15, -KILL, -TERM, ...) are not the PID
+    const rest = flags(a).rest.filter((x) => !/^-(\d+|[A-Z]+)$/.test(x));
     const pid = parseInt(rest[0], 10);
     if (!pid) return err('usage: kill [-9] PID\n');
     if (pid === 1) return err('kill: (1): Operation not permitted\n');
@@ -776,11 +789,21 @@
 
   // ---- Pipeline runner ----------------------------------------------------
 
-  CLIQ.run = function (world, line) {
+  // Run a script by path: ./deploy.sh, /home/hero/x.sh — needs the execute bit, like a real shell
+  function runByPath(name, world) {
+    const node = getNode(world, name);
+    if (!node) return { out: `bash: ${name}: No such file or directory\n`, code: 127, isErr: true };
+    if (node.type === 'dir') return { out: `bash: ${name}: Is a directory\n`, code: 126, isErr: true };
+    const mode = node.mode == null ? 0o644 : node.mode;
+    if (!(mode & 0o100)) return { out: `bash: ${name}: Permission denied\n`, code: 126, isErr: true };
+    return runScript(node, world);
+  }
+
+  CLIQ.run = function (world, line, opts) {
     const raw = line.trim();
     if (!raw) return { raw, cmd: '', argv: [], out: '', code: 0 };
-    world.history.push(raw);
-    const toks = CLIQ.tokenize(raw);
+    if (!opts || !opts.noHistory) world.history.push(raw);
+    const toks = CLIQ.tokenize(raw, world);
 
     // split into pipeline stages + redirect
     const stages = [];
@@ -795,30 +818,39 @@
     stages.push(cur);
 
     let stdin = '';
+    let errAcc = ''; // stderr-style text: displayed, but never piped or redirected
     let result = { out: '', code: 0 };
     for (const stage of stages) {
-      if (!stage.length) { result = { out: 'bash: syntax error near unexpected token `|`\n', code: 2 }; break; }
+      if (!stage.length) { result = { out: '', code: 2, isErr: true }; errAcc += 'bash: syntax error near unexpected token `|`\n'; break; }
       const name = stage[0];
       const fn = CLIQ.commands[name];
-      if (!fn) { result = { out: `bash: ${name}: command not found\nHint: type \`help\` to see available commands.\n`, code: 127 }; break; }
-      try {
-        result = fn(stage.slice(1), world, stdin) || { out: '', code: 0 };
-      } catch (e) {
-        result = { out: name + ': internal error: ' + e.message + '\n', code: 1 };
+      if (!fn && name.includes('/')) {
+        result = runByPath(name, world);
+      } else if (!fn) {
+        result = { out: `bash: ${name}: command not found\nHint: type \`help\` to see available commands.\n`, code: 127, isErr: true };
+      } else {
+        try {
+          result = fn(stage.slice(1), world, stdin) || { out: '', code: 0 };
+        } catch (e) {
+          result = { out: name + ': internal error: ' + e.message + '\n', code: 1, isErr: true };
+        }
       }
+      if (result.isErr) { errAcc += result.out; result = { ...result, out: '' }; }
       stdin = result.out;
+      if (result.code === 127) break; // command not found kills the pipeline
     }
 
     if (redirect && redirect.target && result.code !== 127) {
       const okw = CLIQ.writeFile(world, redirect.target, result.out, redirect.mode === '>>');
-      result = okw ? { out: '', code: 0 } : { out: `bash: ${redirect.target}: No such file or directory\n`, code: 1 };
+      if (okw) result = { ...result, out: '', code: errAcc ? result.code : 0 };
+      else { errAcc += `bash: ${redirect.target}: No such file or directory\n`; result = { ...result, out: '', code: 1 }; }
     }
 
     return {
       raw,
       cmd: toks[0] || '',
       argv: toks,
-      out: result.out,
+      out: errAcc + result.out,
       code: result.code,
       ok: result.code === 0,
       clear: !!result.clear,

@@ -45,18 +45,19 @@
     'Now summon a <b>golem</b> — a virtual machine. One incantation conjures CPU, memory, disk, and a public IP. But beware: golems <i>cost gold every hour they exist</i>, and a "stopped" golem still holds its hardware.':
       'ทีนี้อัญเชิญ <b>โกเลม</b> — เครื่องเสมือน (VM) คาถาเดียวเสก CPU หน่วยความจำ ดิสก์ และ public IP ออกมาครบ แต่ระวัง: โกเลม <i>กินทองทุกชั่วโมงที่มันมีตัวตน</i> และโกเลมที่ "stopped" ก็ยังกอดฮาร์ดแวร์ไว้อยู่ดี',
     'You summon and dismiss compute at will — and you know what it costs.': 'เจ้าอัญเชิญและปลดคอมพิวต์ได้ตามใจ — และรู้ด้วยว่ามันมีราคาเท่าไร',
-    'Summon a VM named <code>golem-01</code> on your land: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code>.':
-      'อัญเชิญ VM ชื่อ <code>golem-01</code> บนผืนดินของเจ้า: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code>',
-    'Type: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code> (or use <code>-g</code> and <code>-n</code>)':
-      'พิมพ์: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code> (หรือใช้ <code>-g</code> กับ <code>-n</code>)',
+    'Summon a VM named <code>golem-01</code> on your land: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code>.':
+      'อัญเชิญ VM ชื่อ <code>golem-01</code> บนผืนดินของเจ้า: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code>',
+    'Type: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code> (real Azure needs SSH keys for a Linux VM — this flag makes them for you)':
+      'พิมพ์: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code> (Azure จริงต้องมีกุญแจ SSH สำหรับ VM Linux — แฟล็กนี้สร้างให้เจ้าเอง)',
     'The golem lives, with a public IP. In real Azure this takes a minute or two.': 'โกเลมมีชีวิตพร้อม public IP — ใน Azure จริงขั้นนี้ใช้เวลาราวหนึ่งถึงสองนาที',
     'Muster your golems: <code>az vm list -o table</code>.': 'เรียกแถวโกเลมของเจ้า: <code>az vm list -o table</code>',
     'Type: <code>az vm list -o table</code>': 'พิมพ์: <code>az vm list -o table</code>',
-    'Halt it: <code>az vm stop --name golem-01</code>. Read the warning it gives you.': 'หยุดมัน: <code>az vm stop --name golem-01</code> แล้วอ่านคำเตือนที่มันบอกเจ้า',
-    'Type: <code>az vm stop --name golem-01</code>': 'พิมพ์: <code>az vm stop --name golem-01</code>',
-    'Release its hardware so the gold stops draining: <code>az vm deallocate --name golem-01</code>.':
-      'ปลดฮาร์ดแวร์คืนไปเพื่อหยุดทองรั่วไหล: <code>az vm deallocate --name golem-01</code>',
-    'Type: <code>az vm deallocate --name golem-01</code>': 'พิมพ์: <code>az vm deallocate --name golem-01</code>',
+    'Halt it: <code>az vm stop -g quest-rg --name golem-01</code>. Read the warning it gives you. (Nearly every az vm command needs the resource group.)':
+      'หยุดมัน: <code>az vm stop -g quest-rg --name golem-01</code> แล้วอ่านคำเตือนที่มันบอกเจ้า (คำสั่ง az vm แทบทุกตัวต้องระบุ resource group)',
+    'Type: <code>az vm stop -g quest-rg --name golem-01</code>': 'พิมพ์: <code>az vm stop -g quest-rg --name golem-01</code>',
+    'Release its hardware so the gold stops draining: <code>az vm deallocate -g quest-rg --name golem-01</code>.':
+      'ปลดฮาร์ดแวร์คืนไปเพื่อหยุดทองรั่วไหล: <code>az vm deallocate -g quest-rg --name golem-01</code>',
+    'Type: <code>az vm deallocate -g quest-rg --name golem-01</code>': 'พิมพ์: <code>az vm deallocate -g quest-rg --name golem-01</code>',
     'Deallocated — compute billing stops (the disk still costs a little).': 'deallocate แล้ว — ค่าคอมพิวต์หยุดเดิน (ดิสก์ยังคิดเงินนิดหน่อย)',
     'The bursar of the Citadel asks:': 'เหรัญญิกป้อมปราการถาม:',
     'Why does <code>az vm stop</code> still cost money while <code>deallocate</code> does not?': 'ทำไม <code>az vm stop</code> ยังเสียเงิน แต่ <code>deallocate</code> ไม่เสีย?',
@@ -122,20 +123,20 @@
     'Prove creation: claim a plot named <code>boss-rg</code> in <code>eastus</code>.': 'พิสูจน์การสร้าง: จับจองผืนดินชื่อ <code>boss-rg</code> ใน <code>eastus</code>',
     'Type: <code>az group create --name boss-rg --location eastus</code>': 'พิมพ์: <code>az group create --name boss-rg --location eastus</code>',
     'Summon a golem named <code>guardian</code> onto <code>boss-rg</code>.': 'อัญเชิญโกเลมชื่อ <code>guardian</code> ลงบน <code>boss-rg</code>',
-    'Type: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204</code>': 'พิมพ์: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204</code>',
+    'Type: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204 --generate-ssh-keys</code>': 'พิมพ์: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204 --generate-ssh-keys</code>',
     'The Warden grins:': 'ผู้คุมยิ้มเยาะ:',
     "The battle is over and boss-rg's golems must not haunt your bill. The cleanest way to remove EVERYTHING in it?":
       'ศึกจบแล้ว และโกเลมของ boss-rg ต้องไม่ตามหลอกหลอนบิลของเจ้า วิธีที่สะอาดที่สุดในการลบ "ทุกอย่าง" ในนั้นคือ?',
-    'az group delete --name boss-rg  (deleting the group deletes all resources in it)': 'az group delete --name boss-rg  (ลบ group เท่ากับลบทรัพยากรทั้งหมดในนั้น)',
+    'az group delete --name boss-rg --yes  (deleting the group deletes all resources in it)': 'az group delete --name boss-rg --yes  (ลบ group เท่ากับลบทรัพยากรทั้งหมดในนั้น)',
     'Delete each resource one by one, then keep the empty group forever': 'ลบทีละทรัพยากร แล้วเก็บ group เปล่าไว้ตลอดกาล',
     'az vm stop — stopped means free': 'az vm stop — หยุดแล้วคือฟรี',
     'Wait: unused resources auto-delete after a week': 'รอ: ของที่ไม่ใช้จะลบตัวเองในหนึ่งสัปดาห์',
     'Group deletion cascades — the reason to organize by lifecycle. And no, nothing auto-deletes; the cloud bills the forgetful.':
       'การลบ group ลามถึงทุกอย่างข้างใน — นี่คือเหตุผลที่จัดกลุ่มตามวงจรชีวิต และไม่มีอะไรลบตัวเองทั้งนั้น คลาวด์เก็บเงินคนขี้ลืมเสมอ',
     'Remember what a resource group IS: a lifecycle boundary.': 'จำให้ได้ว่า resource group คืออะไร: เขตแดนวงจรชีวิต',
-    'Do the deed: <code>az group delete --name boss-rg</code>, then verify with <code>az vm list -o table</code> that the guardian is gone.':
-      'ลงมือ: <code>az group delete --name boss-rg</code> แล้วพิสูจน์ด้วย <code>az vm list -o table</code> ว่า guardian หายไปแล้ว',
-    'Type: <code>az group delete --name boss-rg</code>': 'พิมพ์: <code>az group delete --name boss-rg</code>',
+    'Do the deed: <code>az group delete --name boss-rg --yes</code> (deletion is destructive — the CLI demands explicit consent), then verify with <code>az vm list -o table</code> that the guardian is gone.':
+      'ลงมือ: <code>az group delete --name boss-rg --yes</code> (การลบคือการทำลาย — CLI จึงเรียกร้องคำยืนยันชัดเจน) แล้วพิสูจน์ด้วย <code>az vm list -o table</code> ว่า guardian หายไปแล้ว',
+    'Type: <code>az group delete --name boss-rg --yes</code>': 'พิมพ์: <code>az group delete --name boss-rg --yes</code>',
     'Clean battlefield, clean bill.': 'สนามรบสะอาด บิลก็สะอาด',
 
     // ===== Realm 5: The Kube Keep ============================================
@@ -175,8 +176,8 @@
       'สอบสวนพ็อดที่ป่วย: <code>kubectl describe pod &lt;ชื่อพ็อด-payment&gt; -n shop</code> (คัดลอกชื่อเป๊ะ ๆ จาก get pods) แล้วอ่าน <b>Events</b> ท้ายผลลัพธ์',
     'Run <code>kubectl get pods -n shop</code>, copy the payment-xxxx name, then <code>kubectl describe pod payment-xxxx -n shop</code>':
       'รัน <code>kubectl get pods -n shop</code> คัดลอกชื่อ payment-xxxx แล้วพิมพ์ <code>kubectl describe pod payment-xxxx -n shop</code>',
-    'Events reveal: "Failed to pull image ... tag not found". Someone shipped an image tag that does not exist.':
-      'Events เปิดโปง: "Failed to pull image ... tag not found" — ใครบางคนส่งแท็กอิมเมจที่ไม่มีอยู่จริง',
+    'Events reveal: "Back-off restarting failed container" — it starts, crashes, and kubelet keeps retrying. Someone shipped a broken release.':
+      'Events เปิดโปง: "Back-off restarting failed container" — มันสตาร์ท แครช แล้ว kubelet ก็พยายามใหม่ซ้ำ ๆ ใครบางคนส่งรีลีสที่พังมา',
     "Hear the container's last words: <code>kubectl logs &lt;payment-pod-name&gt; -n shop</code>.": 'ฟังคำพูดสุดท้ายของคอนเทนเนอร์: <code>kubectl logs &lt;ชื่อพ็อด-payment&gt; -n shop</code>',
     'Type: <code>kubectl logs payment-xxxx -n shop</code> (same pod name)': 'พิมพ์: <code>kubectl logs payment-xxxx -n shop</code> (ชื่อพ็อดเดิม)',
     "The Warden's eye turns to you:": 'ดวงตาผู้คุมหันมาที่เจ้า:',
@@ -255,8 +256,8 @@
     'Service = stable front door. ClusterIP inside, LoadBalancer for the public world.': 'Service = ประตูหน้าที่มั่นคง — ClusterIP สำหรับข้างใน LoadBalancer สำหรับโลกสาธารณะ',
 
     // --- k8s-boss ---
-    "🐉 The <b>Chaos Wyrm</b> slams into the Keep and corrupts the shop ward's <code>frontend</code> — it now points at an image that does not exist, and customers see nothing but errors. No hints will save you now, warden. Diagnose it (get → describe/logs), cure it (the good image is <code>shop-frontend:2.1</code>), and prove the cure. <br><br>⚠️ <i>Wrong quiz answers cost a heart.</i>":
-      '🐉 <b>มังกรแห่งความโกลาหล</b> พุ่งชนปราสาทและทำ <code>frontend</code> ของเขต shop ให้เสื่อมทราม — ตอนนี้มันชี้ไปที่อิมเมจที่ไม่มีอยู่จริง และลูกค้าเห็นแต่ข้อผิดพลาด ไม่มีคำใบ้ช่วยเจ้าแล้วผู้คุม จงวินิจฉัย (get → describe/logs) รักษา (อิมเมจดีคือ <code>shop-frontend:2.1</code>) แล้วพิสูจน์การรักษา <br><br>⚠️ <i>ตอบคำถามผิดเสียหัวใจหนึ่งดวง</i>',
+    "🐉 The <b>Chaos Wyrm</b> slams into the Keep and corrupts the shop ward's <code>frontend</code> — it now runs a poisoned release that crashes on startup, and customers see nothing but errors. No hints will save you now, warden. Diagnose it (get → describe/logs), cure it (the good image is <code>shop-frontend:2.1</code>), and prove the cure. <br><br>⚠️ <i>Wrong quiz answers cost a heart.</i>":
+      '🐉 <b>มังกรแห่งความโกลาหล</b> พุ่งชนปราสาทและทำ <code>frontend</code> ของเขต shop ให้เสื่อมทราม — ตอนนี้มันรันรีลีสอาบยาพิษที่แครชตั้งแต่สตาร์ท และลูกค้าเห็นแต่ข้อผิดพลาด ไม่มีคำใบ้ช่วยเจ้าแล้วผู้คุม จงวินิจฉัย (get → describe/logs) รักษา (อิมเมจดีคือ <code>shop-frontend:2.1</code>) แล้วพิสูจน์การรักษา <br><br>⚠️ <i>ตอบคำถามผิดเสียหัวใจหนึ่งดวง</i>',
     'The Wyrm flees. You are the Cloud Archmage — bash, network, cloud, and cluster all answer to you. 🏆👑':
       'มังกรเผ่นหนี เจ้าคือจอมเวทคลาวด์ — bash เครือข่าย คลาวด์ และคลัสเตอร์ล้วนน้อมรับคำสั่งเจ้า 🏆👑',
     'The alarm sounds. Survey the damage in the shop ward.': 'สัญญาณเตือนดังขึ้น สำรวจความเสียหายในเขต shop',
@@ -272,8 +273,8 @@
     "Destruction is not diagnosis. Which command shows a pod's Events?": 'การทำลายไม่ใช่การวินิจฉัย — คำสั่งใดแสดง Events ของพ็อด?',
     'Do it — interrogate a broken frontend pod (describe or logs) and find the evidence.': 'ลงมือ — สอบสวนพ็อด frontend ที่พัง (describe หรือ logs) แล้วหาหลักฐาน',
     'Type: <code>kubectl describe pod frontend-xxxx -n shop</code> (get the name from get pods)': 'พิมพ์: <code>kubectl describe pod frontend-xxxx -n shop</code> (เอาชื่อจาก get pods)',
-    "Evidence: image \"shop-frontend:3.0-broken\" cannot be pulled. The Wyrm's corruption is exposed.":
-      'หลักฐาน: อิมเมจ "shop-frontend:3.0-broken" ดึงไม่ได้ — ความเสื่อมทรามของมังกรถูกเปิดโปง',
+    "Evidence: release \"shop-frontend:3.0-broken\" crashes at startup — Events show the back-off, logs show the FATAL. The Wyrm's corruption is exposed.":
+      'หลักฐาน: รีลีส "shop-frontend:3.0-broken" แครชตั้งแต่สตาร์ท — Events แสดง back-off ส่วน logs แสดง FATAL ความเสื่อมทรามของมังกรถูกเปิดโปง',
     'Strike! Point the frontend back at the true image, <code>shop-frontend:2.1</code>.': 'จู่โจม! ชี้ frontend กลับไปที่อิมเมจแท้จริง <code>shop-frontend:2.1</code>',
     'Type: <code>kubectl set image deployment/frontend frontend=shop-frontend:2.1 -n shop</code>': 'พิมพ์: <code>kubectl set image deployment/frontend frontend=shop-frontend:2.1 -n shop</code>',
     'Direct hit! The rollout begins.': 'โดนเต็ม ๆ! rollout เริ่มขึ้นแล้ว',

@@ -32,7 +32,13 @@
     const msgs = ['scaffold the quest project', 'inscribe the README lore'];
     for (let i = 0; i < count; i++) {
       g.serial++;
-      g.branches.main.push({ id: ('a1f' + (4096 + g.serial * 273).toString(16)).slice(0, 7), msg: msgs[i] || 'chronicle entry ' + (i + 1), files: ['app.py'] });
+      g.branches.main.push({
+        id: ('a1f' + (4096 + g.serial * 273).toString(16)).slice(0, 7),
+        msg: msgs[i] || 'chronicle entry ' + (i + 1),
+        files: ['app.py'],
+        // first commit snapshots the whole project so branch replay matches the working tree
+        snap: i === 0 ? { ...g.tracked } : { 'app.py': proj.children['app.py'].content },
+      });
     }
   }
 
@@ -239,6 +245,7 @@
             text: 'Step back to the main timeline: <code>git checkout main</code>. Run <code>git log --oneline</code> — no potion commit!',
             hint: 'Type: <code>git checkout main</code>',
             check: (e) => e.world.git.branch === 'main',
+            success: 'And run <code>ls</code> — potion.txt itself is GONE from the working tree. It exists only in the other timeline.',
           },
           {
             quiz: {
@@ -268,7 +275,7 @@
           const g = w.git;
           if (!g.initialized || !g.branches['feature-potion']) {
             repoWithCommits(w, 2);
-            w.git.branches['feature-potion'] = [...w.git.branches.main, { id: 'a1fbeef', msg: 'add haste potion', files: ['potion.txt'] }];
+            w.git.branches['feature-potion'] = [...w.git.branches.main, { id: 'a1fbeef', msg: 'add haste potion', files: ['potion.txt'], snap: { 'potion.txt': 'brew of haste\n' } }];
             w.git.serial += 1;
           }
           w.git.branch = 'main';
@@ -334,14 +341,15 @@
             'spellbook.md': CLIQ.file('# Guild Spellbook\n'),
             'omen.txt': CLIQ.file('a half-finished prophecy\n'),
           });
-          const mk = (id, msg) => ({ id, msg, files: ['spellbook.md'] });
-          const mainCommits = [mk('a1f1000', 'found the guild spellbook'), mk('a1f2000', 'add fireball chapter')];
+          const mk = (id, msg, snap) => ({ id, msg, files: Object.keys(snap), snap });
+          const book = '# Guild Spellbook\n';
+          const mainCommits = [mk('a1f1000', 'found the guild spellbook', { 'spellbook.md': book }), mk('a1f2000', 'add fireball chapter', { 'spellbook.md': book })];
           w.git = {
             initialized: true, root: '/home/hero/wraith-repo', serial: 9,
             branch: 'lost-timeline',
             branches: {
               main: [...mainCommits],
-              rescue: [...mainCommits, mk('a1f3000', 'FIX: seal the wraith breach')],
+              rescue: [...mainCommits, mk('a1f3000', 'FIX: seal the wraith breach', { 'spellbook.md': book + '\n## Seal of Binding\nThe wraith breach is closed.\n' })],
               'lost-timeline': [...mainCommits],
             },
             staged: [],

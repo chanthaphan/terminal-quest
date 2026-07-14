@@ -3,7 +3,7 @@
   const CLIQ = window.CLIQ;
   const C = CLIQ.commands;
   const ok = (out) => ({ out: out || '', code: 0 });
-  const err = (out) => ({ out: out || '', code: 1 });
+  const err = (out) => ({ out: out || '', code: 1, isErr: true });
 
   function opt(argv, name) {
     const i = argv.indexOf(name);
@@ -13,6 +13,9 @@
   }
   function jsonOut(obj) {
     return ok(JSON.stringify(obj, null, 2) + '\n');
+  }
+  function wantsTable(argv) {
+    return opt(argv, '-o') === 'table' || opt(argv, '--output') === 'table';
   }
 
   // ---- az -----------------------------------------------------------------
@@ -46,7 +49,7 @@
       }
       if (g2 === 'list') {
         const gs = Object.values(az.groups);
-        if (a.includes('table')) {
+        if (wantsTable(a)) {
           let o = 'Name          Location       Status\n------------  -------------  ---------\n';
           gs.forEach((g) => (o += `${g.name.padEnd(14)}${g.location.padEnd(15)}Succeeded\n`));
           return ok(gs.length ? o : 'Name    Location    Status\n(no resource groups yet)\n');
@@ -56,6 +59,8 @@
       if (g2 === 'delete') {
         const name = opt(a, '--name') || opt(a, '-n');
         if (!name || !az.groups[name]) return err(`Resource group '${name}' could not be found.\n`);
+        if (!a.includes('--yes') && !a.includes('-y'))
+          return err(`Are you sure you want to perform this operation? (y/n):\naz group delete: this terminal is non-interactive — confirm with --yes (real scripts do the same).\n`);
         delete az.groups[name];
         for (const k of Object.keys(az.vms)) if (az.vms[k].rg === name) delete az.vms[k];
         return ok('');
@@ -67,25 +72,34 @@
       if (g2 === 'create') {
         const name = opt(a, '--name') || opt(a, '-n');
         const rg = opt(a, '--resource-group') || opt(a, '-g');
-        const image = opt(a, '--image') || 'Ubuntu2204';
+        const image = opt(a, '--image');
         if (!name || !rg) return err('az vm create: --name and --resource-group are required\n');
+        if (!image) return err('az vm create: --image is required (e.g. --image Ubuntu2204)\n');
         if (!az.groups[rg]) return err(`Resource group '${rg}' could not be found. Create it first with az group create.\n`);
         az.vms[name] = { name, rg, image, power: 'VM running', ip: '20.30.40.' + (10 + Object.keys(az.vms).length) };
         return jsonOut({ fqdns: '', id: `/subscriptions/${az.sub.id}/resourceGroups/${rg}/providers/Microsoft.Compute/virtualMachines/${name}`, location: az.groups[rg].location, name, powerState: 'VM running', publicIpAddress: az.vms[name].ip, resourceGroup: rg });
       }
       if (g2 === 'list') {
         const vms = Object.values(az.vms);
-        if (a.includes('table')) {
-          let o = 'Name       ResourceGroup    Location\n---------  ---------------  ----------\n';
-          vms.forEach((v) => (o += `${v.name.padEnd(11)}${v.rg.padEnd(17)}${az.groups[v.rg] ? az.groups[v.rg].location : '?'}\n`));
+        const details = a.includes('-d') || a.includes('--show-details');
+        if (wantsTable(a)) {
+          let o = details
+            ? 'Name       ResourceGroup    PowerState      PublicIps\n---------  ---------------  --------------  -----------\n'
+            : 'Name       ResourceGroup    Location\n---------  ---------------  ----------\n';
+          vms.forEach((v) => (o += details
+            ? `${v.name.padEnd(11)}${v.rg.padEnd(17)}${v.power.padEnd(16)}${v.ip}\n`
+            : `${v.name.padEnd(11)}${v.rg.padEnd(17)}${az.groups[v.rg] ? az.groups[v.rg].location : '?'}\n`));
           return ok(o);
         }
-        return jsonOut(vms.map((v) => ({ name: v.name, resourceGroup: v.rg, powerState: v.power, publicIps: v.ip })));
+        // power state and public IPs need -d/--show-details, like the real CLI
+        return jsonOut(vms.map((v) => (details ? { name: v.name, resourceGroup: v.rg, powerState: v.power, publicIps: v.ip } : { name: v.name, resourceGroup: v.rg })));
       }
       if (g2 === 'show' || g2 === 'stop' || g2 === 'start' || g2 === 'deallocate') {
         const name = opt(a, '--name') || opt(a, '-n');
+        const rg = opt(a, '--resource-group') || opt(a, '-g');
+        if (!rg) return err(`az vm ${g2}: the following arguments are required: --resource-group/-g\n`);
         const vm = az.vms[name];
-        if (!vm) return err(`The VM '${name}' was not found.\n`);
+        if (!vm || vm.rg !== rg) return err(`The VM '${name}' was not found in resource group '${rg}'.\n`);
         if (g2 === 'stop') { vm.power = 'VM stopped'; return ok('VM stopped. (Note: stopped VMs still incur compute charges — use deallocate to stop billing.)\n'); }
         if (g2 === 'deallocate') { vm.power = 'VM deallocated'; return ok(''); }
         if (g2 === 'start') { vm.power = 'VM running'; return ok(''); }
@@ -119,7 +133,7 @@
         return jsonOut({ name, resourceGroup: rg, agentPoolProfiles: [{ count, name: 'nodepool1', vmSize: 'Standard_DS2_v2' }], kubernetesVersion: '1.30.3', provisioningState: 'Succeeded', fqdn: `${name}-dns.hcp.southeastasia.azmk8s.io` });
       }
       if (g2 === 'list') {
-        if (a.includes('table')) {
+        if (wantsTable(a)) {
           let o = 'Name       ResourceGroup    KubernetesVersion    NodeCount\n---------  ---------------  -------------------  ---------\n';
           Object.values(az.aks).forEach((c) => (o += `${c.name.padEnd(11)}${c.rg.padEnd(17)}${c.version.padEnd(21)}${c.count}\n`));
           return ok(o);
@@ -128,6 +142,8 @@
       }
       if (g2 === 'get-credentials') {
         const name = opt(a, '--name') || opt(a, '-n');
+        const rg = opt(a, '--resource-group') || opt(a, '-g');
+        if (!rg) return err('az aks get-credentials: the following arguments are required: --resource-group/-g\n');
         if (!az.aks[name]) return err(`The cluster '${name}' was not found. Create it with az aks create.\n`);
         w.kubeConnected = true;
         w.k8s.context = name;
@@ -135,7 +151,9 @@
       }
       if (g2 === 'scale') {
         const name = opt(a, '--name') || opt(a, '-n');
+        const rg = opt(a, '--resource-group') || opt(a, '-g');
         const count = parseInt(opt(a, '--node-count') || '0', 10);
+        if (!rg) return err('az aks scale: the following arguments are required: --resource-group/-g\n');
         if (!az.aks[name]) return err(`The cluster '${name}' was not found.\n`);
         if (!count) return err('az aks scale: --node-count is required\n');
         az.aks[name].count = count;
@@ -174,9 +192,6 @@
     function findDeploy(name, ns) {
       const nsObj = k.namespaces[ns];
       return nsObj ? nsObj.deployments[name] : null;
-    }
-    function syncPods(d) {
-      const nsObj = k.namespaces[d.nsName || findNsOf(d)];
     }
     function findNsOf(d) {
       for (const nsName of Object.keys(k.namespaces)) if (k.namespaces[nsName].deployments[d.name] === d) return nsName;
@@ -269,17 +284,17 @@
       if (kind === 'pod') {
         const p = findPod(name, nsFlag);
         if (!p) return err(`Error from server (NotFound): pods "${name}" not found in namespace "${nsFlag}"\n`);
-        const d = findDeploy(p.deploy, p.ns);
         let events = '  Normal   Scheduled  Successfully assigned to ' + p.node + '\n';
         if (p.status !== 'Running') {
-          events += `  Normal   Pulling    Pulling image "${p.image}"\n`;
-          events += `  Warning  Failed     Failed to pull image "${p.image}": manifest unknown: tag not found\n`;
-          events += `  Warning  BackOff    Back-off restarting failed container\n`;
+          // the image pulls fine — the container starts, crashes, and kubelet backs off (a true CrashLoopBackOff)
+          events += `  Normal   Pulled     Container image "${p.image}" successfully pulled\n`;
+          events += `  Normal   Started    Started container ${p.deploy}\n`;
+          events += `  Warning  BackOff    Back-off restarting failed container ${p.deploy} in pod ${p.name} (check its logs)\n`;
         } else {
           events += `  Normal   Pulled     Container image "${p.image}" already present\n  Normal   Started    Started container\n`;
         }
         return ok(
-          `Name:         ${p.name}\nNamespace:    ${p.ns}\nNode:         ${p.node}\nStatus:       ${p.status === 'Running' ? 'Running' : 'Pending'}\nControlled By: Deployment/${p.deploy}\nContainers:\n  ${p.deploy}:\n    Image:   ${p.image}\n    State:   ${p.status === 'Running' ? 'Running' : 'Waiting (CrashLoopBackOff)'}\n    Restarts: ${p.restarts}\nEvents:\n  Type     Reason     Message\n  ----     ------     -------\n${events}`
+          `Name:         ${p.name}\nNamespace:    ${p.ns}\nNode:         ${p.node}\nStatus:       Running\nControlled By: ReplicaSet/${p.deploy}-7d9f\nContainers:\n  ${p.deploy}:\n    Image:   ${p.image}\n    State:   ${p.status === 'Running' ? 'Running' : 'Waiting (CrashLoopBackOff)'}\n    Restarts: ${p.restarts}\nEvents:\n  Type     Reason     Message\n  ----     ------     -------\n${events}`
         );
       }
       if (kind === 'deployment') {
@@ -292,15 +307,17 @@
 
     if (sub === 'logs') {
       const name = a[1];
-      const p = name && findPod(name, nsFlag === 'default' ? '*' : nsFlag);
-      if (!p) return err(`error from server (NotFound): pods "${name || ''}" not found\n`);
+      // logs never searches other namespaces — omit -n and the pod is simply not found, like real kubectl
+      const p = name && findPod(name, nsFlag);
+      if (!p) return err(`Error from server (NotFound): pods "${name || ''}" not found in namespace "${nsFlag === '*' ? 'default' : nsFlag}"\n`);
       if (p.status !== 'Running')
-        return ok(`Starting shop-payment 1.2.3...\nFATAL: config key PAYMENT_GATEWAY_URL missing — image tag "${p.image.split(':')[1]}" was never published\nprocess exited with code 1\n`);
+        return ok(`Starting ${p.deploy} (${p.image.split(':')[1] || 'latest'})...\nFATAL: config key GATEWAY_URL missing from this release — refusing to start\nprocess exited with code 1\n`);
       return ok(`[info] ${p.deploy} listening on :8080\n[info] readiness probe ok\n[info] serving requests for realm "${p.ns}"\n`);
     }
 
     if (sub === 'scale') {
-      const target = (a[1] || '').includes('/') ? a[1] : a[1] === 'deployment' ? 'deployment/' + a[2] : a[1];
+      const norm = (s) => (s || '').replace(/^deploy(ments?)?\//, 'deployment/');
+      const target = (a[1] || '').includes('/') ? norm(a[1]) : /^deploy(ments?)?$/.test(a[1] || '') ? 'deployment/' + a[2] : a[1];
       const m = (target || '').match(/^deployment\/(.+)$/);
       const replicas = parseInt(opt(a, '--replicas') || 'x', 10);
       if (!m || isNaN(replicas)) return err('usage: kubectl scale deployment/NAME --replicas=N  (or --replicas N)\n');
@@ -335,6 +352,9 @@
         return ok(`deployment "${dName}" successfully rolled out\n`);
       }
       if (action === 'restart') {
+        // rolling restart replaces the pods — new pods get new names, like real kubectl
+        const nsObj = k.namespaces[nsFlag];
+        if (nsObj) nsObj.pods = nsObj.pods.filter((p) => p.deploy !== dName);
         reconcile(nsFlag);
         return ok(`deployment.apps/${dName} restarted\n`);
       }
@@ -343,8 +363,9 @@
     }
 
     if (sub === 'set' && a[1] === 'image') {
-      const m = (a[2] || '').match(/^deployment\/(.+)$/);
-      const assign = a[3] || '';
+      const isKind = /^deploy(ments?)?$/.test(a[2] || '');
+      const m = (isKind ? 'deployment/' + (a[3] || '') : (a[2] || '').replace(/^deploy(ments?)?\//, 'deployment/')).match(/^deployment\/(.+)$/);
+      const assign = (isKind ? a[4] : a[3]) || '';
       const [container, image] = assign.split('=');
       if (!m || !image) return err('usage: kubectl set image deployment/NAME CONTAINER=IMAGE:TAG\n');
       const d = findDeploy(m[1], nsFlag);
@@ -370,6 +391,7 @@
       if (kindM[1] === 'Deployment') {
         const nsObj = k.namespaces[nsFlag] || k.namespaces['default'];
         let d = nsObj.deployments[name];
+        const isNew = !d; // decide before reconcile() bumps the serial
         if (!d) {
           d = { name, replicas: replM ? +replM[1] : 1, image: imgM ? imgM[1] : name + ':latest', serial: 0, broken: false };
           nsObj.deployments[name] = d;
@@ -378,7 +400,7 @@
           if (imgM) { d.image = imgM[1]; d.broken = /bad|broken|unknown/.test(d.image); }
         }
         reconcile(nsFlag === '*' ? 'default' : nsFlag);
-        return ok(`deployment.apps/${name} ${d.serial ? 'configured' : 'created'}\n`);
+        return ok(`deployment.apps/${name} ${isNew ? 'created' : 'configured'}\n`);
       }
       return ok(`${kindM[1].toLowerCase()}/${name} created\n`);
     }

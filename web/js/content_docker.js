@@ -49,7 +49,7 @@
           {
             text: 'Bring one to life, detached and named: <code>docker run -d --name web nginx</code>.',
             hint: 'Type: <code>docker run -d --name web nginx</code> (-d = run in background)',
-            check: (e) => { const c = ctr(e.world, 'web'); return c && c.status.startsWith('Up'); },
+            check: (e) => { const c = ctr(e.world, 'web'); return c && c.status.startsWith('Up') && (e.argv.includes('-d') || e.argv.includes('--detach')); },
             success: 'It answered with a container id — the golem\'s true name.',
           },
           {
@@ -200,8 +200,8 @@
           {
             text: 'Give it life and hear it speak: <code>docker run --name reader spellbook:1.0</code>.',
             hint: 'Type: <code>docker run --name reader spellbook:1.0</code>',
-            check: (e) => e.cmd === 'docker' && e.out.includes('conjure'),
-            success: 'It ran its CMD, spoke the spell, and finished. Not every container is a server.',
+            check: (e) => e.cmd === 'docker' && e.argv.includes('run') && e.out.includes('conjure'),
+            success: 'It ran its CMD, spoke the spell, and finished — check <code>docker ps -a</code>: Exited (0). Not every container is a server.',
           },
           {
             quiz: {
@@ -270,7 +270,7 @@
         boss: true,
         story:
           '🗿 The Foundry shakes! The <b>Image Golem</b> — a botched summoning — lies collapsed in the corner, ' +
-          'and the Quest Portal it should serve is dark. It was run with the wrong incantation. ' +
+          'and the Quest Portal it should serve is dark. It was summoned without its key, and its gate was never published. ' +
           'Diagnose it the professional way: <b>find the corpse, read its last words, clear it, resummon it correctly, prove it lives.</b> ' +
           '<br><br>⚠️ <i>Wrong answers cost a heart.</i>',
         outro: 'The Golem stands tall, serving on gate 8080. The Foundry is yours. 🏆',
@@ -287,7 +287,7 @@
           w.docker.containers.push({
             id: 'c0ffeedead' + w.docker.serial, name: 'golem', image: 'quest/portal:2.0',
             status: 'Exited (1) 5 minutes ago', hostPort: null, ctrPort: null,
-            logs: 'Starting Quest Portal...\nFATAL: port 80 must be published to a host port (run with -p HOST:80)\nprocess exited with code 1\n',
+            logs: 'Starting Quest Portal...\nFATAL: PORTAL_KEY is not set — the portal cannot start (run with -e PORTAL_KEY=<key>)\nprocess exited with code 1\n',
           });
         },
         tasks: [
@@ -301,7 +301,7 @@
             text: 'Read its last words.',
             hint: 'Type: <code>docker logs golem</code>',
             check: (e) => e.cmd === 'docker' && e.argv.includes('logs') && e.out.includes('FATAL'),
-            success: 'FATAL: port 80 must be published. The summoner forgot -p!',
+            success: 'FATAL: PORTAL_KEY is not set. The summoner forgot its key — and forgot to publish the gate, too.',
           },
           {
             quiz: {
@@ -324,9 +324,9 @@
             check: (e) => e.cmd === 'docker' && !ctr(e.world, 'golem'),
           },
           {
-            text: 'Resummon it CORRECTLY: detached, named golem, gate 8080 leading to its port 80, from image <code>quest/portal:2.0</code>.',
-            hint: 'Type: <code>docker run -d --name golem -p 8080:80 quest/portal:2.0</code>',
-            check: (e) => { const c = ctr(e.world, 'golem'); return c && c.status.startsWith('Up') && c.hostPort === 8080; },
+            text: 'Resummon it CORRECTLY: detached, named golem, gate 8080 leading to its port 80, with its key <code>-e PORTAL_KEY=quest</code>, from image <code>quest/portal:2.0</code>.',
+            hint: 'Type: <code>docker run -d --name golem -p 8080:80 -e PORTAL_KEY=quest quest/portal:2.0</code>',
+            check: (e) => { const c = ctr(e.world, 'golem'); return c && c.status.startsWith('Up') && c.hostPort === 8080 && c.image.startsWith('quest/portal'); },
             success: 'It stands! The furnace light turns green.',
           },
           {

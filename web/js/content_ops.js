@@ -37,7 +37,7 @@
             text: 'Rank them by appetite: <code>top</code>.',
             hint: 'Type: <code>top</code>',
             check: (e) => e.cmd === 'top' && e.out.includes('load average'),
-            success: 'Load average = how many processes are waiting for CPU. Under your core count = healthy.',
+            success: 'Load average ≈ how many processes are running or waiting to run (on Linux it also counts those stuck in disk I/O). Under your core count = healthy.',
           },
           {
             text: 'Hunt a specific one with a pipe: <code>ps aux | grep postgres</code>.',
@@ -274,7 +274,7 @@
                 'Wait for it to finish devouring',
               ],
               answer: 0,
-              explain: 'Target the culprit PID, politely first. (kill -9 1 would be catastrophic — PID 1 is init!)',
+              explain: 'Target the culprit PID, politely first. (Never aim at PID 1 — that is init; the kernel refuses to SIGKILL it anyway.)',
               explainWrong: 'Never strike PID 1, and never reboot before diagnosing. Target the culprit.',
             },
             text: 'The Daemon\'s challenge:',

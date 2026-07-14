@@ -123,7 +123,7 @@
             check: (e) => e.cmd === 'grep' && e.out.includes('dragon fire mountain'),
           },
           {
-            text: 'How many dragons? Count matches with the <code>-c</code> flag.',
+            text: 'How many dragons? Count matching lines with the <code>-c</code> flag.',
             hint: 'Type: <code>grep -c dragon scrolls/beasts.txt</code>',
             check: (e) => e.cmd === 'grep' && e.argv.includes('-c') && e.out.trim() === '3',
             success: 'Three dragons. -c counts matching lines.',
@@ -135,8 +135,8 @@
           },
           {
             text: 'Peek at just the first 2 lines of the ledger with <code>head -n 2 library/ledger.log</code>. (<code>tail</code> shows the end.)',
-            hint: 'Type: <code>head -n 2 library/ledger.log</code>',
-            check: (e) => (e.cmd === 'head' || e.cmd === 'tail') && e.ok && e.argv.includes('-n'),
+            hint: 'Type: <code>head -n 2 library/ledger.log</code> (the shorthand <code>head -2</code> works too)',
+            check: (e) => (e.cmd === 'head' || e.cmd === 'tail') && e.ok && (e.argv.includes('-n') || e.argv.some((x) => /^-\d+$/.test(x))),
           },
           {
             text: 'Measure the bestiary: <code>wc -l scrolls/beasts.txt</code> counts its lines.',
@@ -211,13 +211,19 @@
             text: 'A question from the Keymaster:',
           },
           {
-            text: 'Grant the execute permission so the script can run: <code>chmod +x crypt/locked.sh</code> (or <code>chmod 755</code>).',
+            text: 'Try to run it directly: <code>./crypt/locked.sh</code> — and watch the gate refuse you.',
+            hint: 'Type: <code>./crypt/locked.sh</code> — the leading <code>./</code> means "this file, right here"',
+            check: (e) => e.cmd === './crypt/locked.sh' && !e.ok,
+            success: 'Permission denied — you can read the scroll, but not CAST it. The execute bit is missing.',
+          },
+          {
+            text: 'Grant the execute permission: <code>chmod +x crypt/locked.sh</code> (or <code>chmod 755 crypt/locked.sh</code>).',
             hint: 'Type: <code>chmod +x crypt/locked.sh</code>',
             check: (e) => { const n = N(e.world, '/home/hero/crypt/locked.sh'); return e.cmd === 'chmod' && n && (n.mode & 0o100) !== 0; },
           },
           {
-            text: 'Now run it: <code>bash crypt/locked.sh</code>.',
-            hint: 'Type: <code>bash crypt/locked.sh</code>',
+            text: 'Now run it again: <code>./crypt/locked.sh</code>.',
+            hint: 'Type: <code>./crypt/locked.sh</code> (running via <code>bash crypt/locked.sh</code> works too — but that needs only READ permission, not execute)',
             check: (e) => e.out.includes('crypt gate creaks open'),
           },
           {

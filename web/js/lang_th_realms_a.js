@@ -121,8 +121,9 @@
       'เครื่องหนึ่งมีที่อยู่เดียวแต่มีหลาย <b>พอร์ต</b> — ประตูติดหมายเลข แต่ละบานมีเซอร์วิสเฝ้าอยู่ ssh รอที่ประตู 22, HTTP ที่ 80, HTTPS ที่ 443, PostgreSQL ที่ 5432 คำสั่ง <code>ss</code>/<code>netstat</code> แสดงประตูที่เปิดอยู่ ส่วน <code>nc</code> ใช้เคาะประตูจากภายนอก',
     'You see every gate, and know who guards it.': 'เจ้ามองเห็นทุกประตู และรู้ว่าใครเฝ้าอยู่',
     'Enter the web server: <code>ssh hero@web-01</code>.': 'เข้าไปในเว็บเซิร์ฟเวอร์: <code>ssh hero@web-01</code>',
-    'List its open gates: <code>ss</code> (or <code>netstat</code>).': 'แสดงประตูที่เปิดอยู่: <code>ss</code> (หรือ <code>netstat</code>)',
-    'Type: <code>ss</code>': 'พิมพ์: <code>ss</code>',
+    'List its LISTENING gates: <code>ss -tln</code> (or <code>netstat -tln</code>). The <code>-l</code> is the key — without it, real ss shows only established connections, not listeners.':
+      'แสดงประตูที่กำลัง "รอฟัง": <code>ss -tln</code> (หรือ <code>netstat -tln</code>) — หัวใจคือ <code>-l</code> เพราะ ss จริง ๆ ถ้าไม่ใส่จะแสดงเฉพาะการเชื่อมต่อที่เกิดขึ้นแล้ว ไม่แสดงตัวรอฟัง',
+    'Type: <code>ss -tln</code> (-t TCP, -l listening, -n numeric ports)': 'พิมพ์: <code>ss -tln</code> (-t TCP, -l listening, -n เลขพอร์ต)',
     'Gate 22 (sshd) and gate 80 (nginx) stand open, LISTENing.': 'ประตู 22 (sshd) และประตู 80 (nginx) เปิดรออยู่ในสถานะ LISTEN',
     "From here, knock on the database's gate: <code>nc -zv db-01 5432</code>.": 'จากตรงนี้ ลองเคาะประตูฐานข้อมูล: <code>nc -zv db-01 5432</code>',
     'Type: <code>nc -zv db-01 5432</code> — -z just checks, -v reports.': 'พิมพ์: <code>nc -zv db-01 5432</code> — -z แค่ตรวจ, -v รายงานผล',
@@ -378,6 +379,8 @@
       'บันทึกลง "เส้นเวลานี้": <code>git add .</code> แล้ว <code>git commit -m "add haste potion"</code>',
     'Type: <code>git add .</code> then <code>git commit -m "add haste potion"</code>': 'พิมพ์: <code>git add .</code> แล้วตามด้วย <code>git commit -m "add haste potion"</code>',
     'The potion exists only in feature-potion. main knows nothing of it.': 'ยานี้มีอยู่เฉพาะใน feature-potion — main ไม่รู้เรื่องเลย',
+    'And run <code>ls</code> — potion.txt itself is GONE from the working tree. It exists only in the other timeline.':
+      'แล้วลอง <code>ls</code> ดูสิ — potion.txt หายไปจาก working tree จริง ๆ มันมีอยู่แค่ในไทม์ไลน์อีกเส้นเท่านั้น',
     'Step back to the main timeline: <code>git checkout main</code>. Run <code>git log --oneline</code> — no potion commit!':
       'ก้าวกลับสู่เส้นเวลาหลัก: <code>git checkout main</code> แล้วรัน <code>git log --oneline</code> — ไม่มี commit ยาเลย!',
     'Type: <code>git checkout main</code>': 'พิมพ์: <code>git checkout main</code>',

@@ -30,8 +30,8 @@
     'Silence. The zone record is gone.': 'เงียบสนิท — record ของโซนหายไปแล้ว',
     'You cannot rebuild the DNS zone from here — but you CAN override locally. Append an emergency entry mapping <code>203.0.113.10</code> to <code>quest.dev</code> into <code>/etc/hosts</code>.':
       'เจ้าซ่อมโซน DNS จากตรงนี้ไม่ได้ — แต่ override ในเครื่องได้ จงต่อท้ายรายการฉุกเฉินจับคู่ <code>203.0.113.10</code> กับ <code>quest.dev</code> ลงใน <code>/etc/hosts</code>',
-    'Type: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — remember, /etc/hosts is checked before DNS!':
-      'พิมพ์: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — จำได้ไหม /etc/hosts ถูกเช็กก่อน DNS!',
+    'Type: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — checked before DNS! (On a real system this file is root-owned: you\'d write it with <code>echo "..." | sudo tee -a /etc/hosts</code>, since <code>sudo echo &gt;&gt;</code> redirects in YOUR unprivileged shell.)':
+      'พิมพ์: <code>echo "203.0.113.10 quest.dev" &gt;&gt; /etc/hosts</code> — ถูกเช็กก่อน DNS! (บนระบบจริงไฟล์นี้เป็นของ root: ต้องเขียนด้วย <code>echo "..." | sudo tee -a /etc/hosts</code> เพราะ <code>sudo echo &gt;&gt;</code> จะ redirect ในเชลล์ไร้สิทธิ์ของเจ้าเอง)',
     'The resolver will now find quest.dev locally. (Real fix later: repair the zone — note it for the runbook.)':
       'บัดนี้ resolver จะพบ quest.dev จากในเครื่อง (ทางแก้จริงไว้ทีหลัง: ซ่อมโซน — จดใส่ runbook ด้วย)',
     'Prove the override works: fetch <code>http://quest.dev</code> again.': 'พิสูจน์ว่า override ได้ผล: ดึง <code>http://quest.dev</code> อีกครั้ง',
@@ -60,7 +60,7 @@
       '<b>[คลัสเตอร์]</b> เขต shop ลุกไหม้อีกครั้ง จงวินิจฉัย deployment ที่ถูกวางยา — หาหลักฐานใน Events หรือ logs',
     'Type: <code>kubectl get pods -n shop</code>, then <code>kubectl describe pod payment-xxxx -n shop</code>':
       'พิมพ์: <code>kubectl get pods -n shop</code> แล้วตามด้วย <code>kubectl describe pod payment-xxxx -n shop</code>',
-    'Image "shop-payment:2.0-void" does not exist. The Amalgam\'s poison, exposed.': 'อิมเมจ "shop-payment:2.0-void" ไม่มีอยู่จริง — ยาพิษของดิ อมัลกัมถูกเปิดโปง',
+    'Release "shop-payment:2.0-void" crashes on startup. The Amalgam\'s poison, exposed.': 'รีลีส "shop-payment:2.0-void" แครชตั้งแต่สตาร์ท — ยาพิษของดิ อมัลกัมถูกเปิดโปง',
     'Cure it: the true image is <code>shop-payment:2.1</code>. Roll it out and verify.': 'รักษามัน: อิมเมจแท้จริงคือ <code>shop-payment:2.1</code> — roll out แล้วพิสูจน์',
     'Type: <code>kubectl set image deployment/payment payment=shop-payment:2.1 -n shop</code> then <code>kubectl rollout status deployment/payment -n shop</code>':
       'พิมพ์: <code>kubectl set image deployment/payment payment=shop-payment:2.1 -n shop</code> แล้วตามด้วย <code>kubectl rollout status deployment/payment -n shop</code>',
@@ -77,8 +77,8 @@
 
     '<b>[CONTAINERS]</b> A fallen container blocks the foundry. Find it, read its last words, clear it, and resummon it correctly on gate 8080.':
       '<b>[คอนเทนเนอร์]</b> คอนเทนเนอร์ที่ล้มขวางโรงหลอมอยู่ จงหามัน อ่านคำพูดสุดท้าย เก็บกวาด แล้วอัญเชิญใหม่ให้ถูกต้องที่ประตู 8080',
-    'Type: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code>, then <code>docker run -d --name void-portal -p 8080:80 quest/portal:2.0</code>':
-      'พิมพ์: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code> แล้ว <code>docker run -d --name void-portal -p 8080:80 quest/portal:2.0</code>',
+    'Type: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code>, then <code>docker run -d --name void-portal -p 8080:80 -e PORTAL_KEY=void quest/portal:2.0</code>':
+      'พิมพ์: <code>docker ps -a</code>, <code>docker logs void-portal</code>, <code>docker rm void-portal</code> แล้ว <code>docker run -d --name void-portal -p 8080:80 -e PORTAL_KEY=void quest/portal:2.0</code>',
     'The portal golem stands. Verify with curl localhost:8080 if you wish. Five heads down.': 'โกเลมพอร์ทัลยืนขึ้นแล้ว จะพิสูจน์ด้วย curl localhost:8080 ก็ได้ หัวที่ห้าร่วง',
 
     '<b>[CHRONICLE]</b> A hero documents. Come home first — <code>exit</code> until your prompt says <b>sanctum</b> (always watch your prompt!). Then enter <code>~/warroom</code>, write at least one line of runbook into <code>runbook.md</code>, open a repository, and commit it.':

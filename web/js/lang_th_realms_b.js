@@ -78,7 +78,7 @@
     'Admire your mold among the others: <code>docker images</code>.': 'ชื่นชมแม่พิมพ์ของเจ้าท่ามกลางแม่พิมพ์อื่น: <code>docker images</code>',
     'Give it life and hear it speak: <code>docker run --name reader spellbook:1.0</code>.': 'มอบชีวิตแล้วฟังมันพูด: <code>docker run --name reader spellbook:1.0</code>',
     'Type: <code>docker run --name reader spellbook:1.0</code>': 'พิมพ์: <code>docker run --name reader spellbook:1.0</code>',
-    'It ran its CMD, spoke the spell, and finished. Not every container is a server.': 'มันรัน CMD เอ่ยคาถา แล้วจบการทำงาน — ไม่ใช่ทุก container จะเป็นเซิร์ฟเวอร์',
+    'It ran its CMD, spoke the spell, and finished — check <code>docker ps -a</code>: Exited (0). Not every container is a server.': 'มันรัน CMD เอ่ยคาถา แล้วจบการทำงาน — ลองดู <code>docker ps -a</code>: Exited (0) — ไม่ใช่ทุก container จะเป็นเซิร์ฟเวอร์',
     'The forge master asks:': 'นายช่างเตาหลอมถาม:',
     'Why do Dockerfiles put rarely-changing steps (like installing dependencies) BEFORE the app code COPY?':
       'ทำไม Dockerfile จึงวางขั้นตอนที่นาน ๆ เปลี่ยนที (เช่นติดตั้ง dependencies) ไว้ "ก่อน" COPY โค้ดแอป?',
@@ -110,15 +110,15 @@
     'host:container, always. Mnemonic: you stand outside (host side comes first).': 'host:container เสมอ — วิธีจำ: เจ้ายืนอยู่ข้างนอก (ฝั่ง host มาก่อน)',
 
     // --- docker-boss ---
-    '🗿 The Foundry shakes! The <b>Image Golem</b> — a botched summoning — lies collapsed in the corner, and the Quest Portal it should serve is dark. It was run with the wrong incantation. Diagnose it the professional way: <b>find the corpse, read its last words, clear it, resummon it correctly, prove it lives.</b> <br><br>⚠️ <i>Wrong answers cost a heart.</i>':
-      '🗿 โรงหลอมสั่นสะเทือน! <b>โกเลมอิมเมจ</b> — การอัญเชิญที่ล้มเหลว — นอนพังอยู่มุมห้อง และ Quest Portal ที่มันควรให้บริการก็มืดสนิท มันถูกรันด้วยคาถาที่ผิด จงวินิจฉัยอย่างมืออาชีพ: <b>หาศพ อ่านคำพูดสุดท้าย เก็บกวาด อัญเชิญใหม่ให้ถูกต้อง แล้วพิสูจน์ว่ามันมีชีวิต</b> <br><br>⚠️ <i>ตอบผิดเสียหัวใจหนึ่งดวง</i>',
+    '🗿 The Foundry shakes! The <b>Image Golem</b> — a botched summoning — lies collapsed in the corner, and the Quest Portal it should serve is dark. It was summoned without its key, and its gate was never published. Diagnose it the professional way: <b>find the corpse, read its last words, clear it, resummon it correctly, prove it lives.</b> <br><br>⚠️ <i>Wrong answers cost a heart.</i>':
+      '🗿 โรงหลอมสั่นสะเทือน! <b>โกเลมอิมเมจ</b> — การอัญเชิญที่ล้มเหลว — นอนพังอยู่มุมห้อง และ Quest Portal ที่มันควรให้บริการก็มืดสนิท มันถูกอัญเชิญโดยไม่มีกุญแจ แถมประตูของมันก็ไม่เคยถูก publish จงวินิจฉัยอย่างมืออาชีพ: <b>หาศพ อ่านคำพูดสุดท้าย เก็บกวาด อัญเชิญใหม่ให้ถูกต้อง แล้วพิสูจน์ว่ามันมีชีวิต</b> <br><br>⚠️ <i>ตอบผิดเสียหัวใจหนึ่งดวง</i>',
     'The Golem stands tall, serving on gate 8080. The Foundry is yours. 🏆': 'โกเลมยืนตระหง่าน ให้บริการที่ประตู 8080 โรงหลอมเป็นของเจ้าแล้ว 🏆',
     'Something died here. Find the fallen container.': 'มีบางอย่างตายที่นี่ จงหา container ที่ล้ม',
     "Type: <code>docker ps -a</code> — the living-only roll won't show it": 'พิมพ์: <code>docker ps -a</code> — บัญชีเฉพาะผู้มีชีวิตจะไม่แสดงมัน',
     'golem — Exited (1). Exit code 1 means it died screaming.': 'golem — Exited (1) — exit code 1 แปลว่ามันตายทั้งที่กรีดร้อง',
     'Read its last words.': 'อ่านคำพูดสุดท้ายของมัน',
     'Type: <code>docker logs golem</code>': 'พิมพ์: <code>docker logs golem</code>',
-    'FATAL: port 80 must be published. The summoner forgot -p!': 'FATAL: ต้อง publish พอร์ต 80 — คนอัญเชิญลืมใส่ -p!',
+    'FATAL: PORTAL_KEY is not set. The summoner forgot its key — and forgot to publish the gate, too.': 'FATAL: ไม่ได้ตั้ง PORTAL_KEY — คนอัญเชิญลืมกุญแจ แถมยังลืม publish ประตูอีกด้วย!',
     "The Golem's riddle:": 'ปริศนาของโกเลม:',
     'The Golem rumbles: "What does my exit code (1) MEAN?"': 'โกเลมคำราม: "exit code (1) ของข้าหมายความว่าอะไร?"',
     'The process ended with an error — 0 means success, non-zero means failure': 'โปรเซสจบด้วยข้อผิดพลาด — 0 คือสำเร็จ ไม่ใช่ศูนย์คือล้มเหลว',
@@ -130,9 +130,9 @@
     'Think of every command you have run — what did code 0 mean in this very terminal?': 'นึกถึงทุกคำสั่งที่เจ้าเคยรัน — code 0 หมายถึงอะไรในเทอร์มินัลนี้แหละ?',
     'Clear the wreckage — remove the dead container (its name must be freed).': 'เก็บกวาดซาก — ลบ container ที่ตายแล้ว (ต้องปลดปล่อยชื่อของมัน)',
     'Type: <code>docker rm golem</code>': 'พิมพ์: <code>docker rm golem</code>',
-    'Resummon it CORRECTLY: detached, named golem, gate 8080 leading to its port 80, from image <code>quest/portal:2.0</code>.':
-      'อัญเชิญใหม่ให้ "ถูกต้อง": แบบเบื้องหลัง ชื่อ golem ประตู 8080 นำสู่พอร์ต 80 ของมัน จากอิมเมจ <code>quest/portal:2.0</code>',
-    'Type: <code>docker run -d --name golem -p 8080:80 quest/portal:2.0</code>': 'พิมพ์: <code>docker run -d --name golem -p 8080:80 quest/portal:2.0</code>',
+    'Resummon it CORRECTLY: detached, named golem, gate 8080 leading to its port 80, with its key <code>-e PORTAL_KEY=quest</code>, from image <code>quest/portal:2.0</code>.':
+      'อัญเชิญใหม่ให้ "ถูกต้อง": แบบเบื้องหลัง ชื่อ golem ประตู 8080 นำสู่พอร์ต 80 พร้อมกุญแจ <code>-e PORTAL_KEY=quest</code> จากอิมเมจ <code>quest/portal:2.0</code>',
+    'Type: <code>docker run -d --name golem -p 8080:80 -e PORTAL_KEY=quest quest/portal:2.0</code>': 'พิมพ์: <code>docker run -d --name golem -p 8080:80 -e PORTAL_KEY=quest quest/portal:2.0</code>',
     'It stands! The furnace light turns green.': 'มันยืนขึ้นแล้ว! ไฟเตาหลอมเปลี่ยนเป็นสีเขียว',
     'Never trust — verify. Prove the Portal serves.': 'อย่าเชื่อ — จงพิสูจน์ ยืนยันว่า Portal ให้บริการจริง',
     'Quest Portal Online. Incident closed with evidence.': 'Quest Portal Online — ปิด incident ด้วยหลักฐาน',
@@ -153,7 +153,7 @@
     'Type: <code>ps aux</code>': 'พิมพ์: <code>ps aux</code>',
     'Rank them by appetite: <code>top</code>.': 'จัดอันดับตามความตะกละ: <code>top</code>',
     'Type: <code>top</code>': 'พิมพ์: <code>top</code>',
-    'Load average = how many processes are waiting for CPU. Under your core count = healthy.': 'load average = จำนวนโปรเซสที่รอ CPU อยู่ — ต่ำกว่าจำนวนคอร์ = สุขภาพดี',
+    'Load average ≈ how many processes are running or waiting to run (on Linux it also counts those stuck in disk I/O). Under your core count = healthy.': 'load average ≈ จำนวนโปรเซสที่กำลังรันหรือรอคิวรัน (บน Linux นับรวมตัวที่ค้างรอดิสก์ I/O ด้วย) — ต่ำกว่าจำนวนคอร์ = สุขภาพดี',
     'Hunt a specific one with a pipe: <code>ps aux | grep postgres</code>.': 'ล่าตัวที่ต้องการด้วยไปป์: <code>ps aux | grep postgres</code>',
     'Type: <code>ps aux | grep postgres</code>': 'พิมพ์: <code>ps aux | grep postgres</code>',
     'The alchemist asks:': 'นักแปรธาตุถาม:',
@@ -262,7 +262,7 @@
     'kill -9 1 — take out the ancestor': 'kill -9 1 — จัดการบรรพบุรุษเลย',
     'Reboot the whole server immediately': 'รีบูตทั้งเซิร์ฟเวอร์ทันที',
     'Wait for it to finish devouring': 'รอให้มันกินเสร็จ',
-    'Target the culprit PID, politely first. (kill -9 1 would be catastrophic — PID 1 is init!)': 'เล็ง PID ตัวการ อย่างสุภาพก่อน (kill -9 1 คือหายนะ — PID 1 คือ init!)',
+    'Target the culprit PID, politely first. (Never aim at PID 1 — that is init; the kernel refuses to SIGKILL it anyway.)': 'เล็ง PID ตัวการ อย่างสุภาพก่อน (อย่าเล็ง PID 1 เด็ดขาด — นั่นคือ init และเคอร์เนลก็ปฏิเสธ SIGKILL ให้มันอยู่แล้ว)',
     'Never strike PID 1, and never reboot before diagnosing. Target the culprit.': 'ห้ามโจมตี PID 1 และห้ามรีบูตก่อนวินิจฉัย — เล็งที่ตัวการ',
     'Strike it down.': 'ฟาดฟันมันลง',
     'Type: <code>kill 1337</code>': 'พิมพ์: <code>kill 1337</code>',

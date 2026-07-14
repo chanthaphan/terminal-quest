@@ -44,6 +44,7 @@
   };
 
   CLIQ.writeFile = function (world, p, content, append) {
+    if (CLIQ.normalize(world, p) === '/dev/null') return true; // the abyss accepts everything
     const { parent, name } = CLIQ.getParent(world, p);
     if (!parent || parent.type !== 'dir') return false;
     const existing = parent.children[name];
@@ -54,14 +55,28 @@
     return true;
   };
 
-  // Tokenizer: handles quotes, |, > and >>
-  CLIQ.tokenize = function (line) {
+  // Tokenizer: handles quotes, |, > and >> — and $VAR expansion (blocked by single quotes, like bash)
+  CLIQ.tokenize = function (line, world) {
     const toks = [];
     let cur = '';
     let q = null;
     let has = false;
+    const vars = world
+      ? {
+          USER: world.user, HOME: world.home, HOSTNAME: world.hostname,
+          PWD: world.cwd, SHELL: '/bin/bash', PATH: '/usr/local/bin:/usr/bin:/bin',
+        }
+      : null;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
+      if (c === '$' && q !== "'" && vars) {
+        const m = line.slice(i + 1).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+        if (m) {
+          cur += vars[m[0]] != null ? vars[m[0]] : '';
+          i += m[0].length;
+          continue;
+        }
+      }
       if (q) {
         if (c === q) q = null;
         else cur += c;
@@ -128,6 +143,7 @@
       }),
       var: dir({ log: dir({ 'syslog': file('system boot ok\n') }) }),
       tmp: dir({}),
+      dev: dir({ 'null': file('') }),
     });
   }
 
@@ -138,6 +154,7 @@
           home: dir({ hero: dir({}) }),
           etc: dir({}),
           var: dir({ log: dir({}) }),
+          dev: dir({ 'null': file('') }),
         },
         extra || {}
       )

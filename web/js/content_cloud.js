@@ -92,8 +92,8 @@
         outro: 'You summon and dismiss compute at will — and you know what it costs.',
         tasks: [
           {
-            text: 'Summon a VM named <code>golem-01</code> on your land: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code>.',
-            hint: 'Type: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204</code> (or use <code>-g</code> and <code>-n</code>)',
+            text: 'Summon a VM named <code>golem-01</code> on your land: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code>.',
+            hint: 'Type: <code>az vm create --resource-group quest-rg --name golem-01 --image Ubuntu2204 --generate-ssh-keys</code> (real Azure needs SSH keys for a Linux VM — this flag makes them for you)',
             check: (e) => !!e.world.azure.vms['golem-01'],
             success: 'The golem lives, with a public IP. In real Azure this takes a minute or two.',
           },
@@ -103,13 +103,13 @@
             check: (e) => e.cmd === 'az' && e.out.includes('golem-01'),
           },
           {
-            text: 'Halt it: <code>az vm stop --name golem-01</code>. Read the warning it gives you.',
-            hint: 'Type: <code>az vm stop --name golem-01</code>',
+            text: 'Halt it: <code>az vm stop -g quest-rg --name golem-01</code>. Read the warning it gives you. (Nearly every az vm command needs the resource group.)',
+            hint: 'Type: <code>az vm stop -g quest-rg --name golem-01</code>',
             check: (e) => e.world.azure.vms['golem-01'] && e.world.azure.vms['golem-01'].power === 'VM stopped',
           },
           {
-            text: 'Release its hardware so the gold stops draining: <code>az vm deallocate --name golem-01</code>.',
-            hint: 'Type: <code>az vm deallocate --name golem-01</code>',
+            text: 'Release its hardware so the gold stops draining: <code>az vm deallocate -g quest-rg --name golem-01</code>.',
+            hint: 'Type: <code>az vm deallocate -g quest-rg --name golem-01</code>',
             check: (e) => e.world.azure.vms['golem-01'] && e.world.azure.vms['golem-01'].power === 'VM deallocated',
             success: 'Deallocated — compute billing stops (the disk still costs a little).',
           },
@@ -243,14 +243,14 @@
           },
           {
             text: 'Summon a golem named <code>guardian</code> onto <code>boss-rg</code>.',
-            hint: 'Type: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204</code>',
+            hint: 'Type: <code>az vm create -g boss-rg -n guardian --image Ubuntu2204 --generate-ssh-keys</code>',
             check: (e) => !!e.world.azure.vms['guardian'],
           },
           {
             quiz: {
               question: 'The battle is over and boss-rg\'s golems must not haunt your bill. The cleanest way to remove EVERYTHING in it?',
               choices: [
-                'az group delete --name boss-rg  (deleting the group deletes all resources in it)',
+                'az group delete --name boss-rg --yes  (deleting the group deletes all resources in it)',
                 'Delete each resource one by one, then keep the empty group forever',
                 'az vm stop — stopped means free',
                 'Wait: unused resources auto-delete after a week',
@@ -262,8 +262,8 @@
             text: 'The Warden grins:',
           },
           {
-            text: 'Do the deed: <code>az group delete --name boss-rg</code>, then verify with <code>az vm list -o table</code> that the guardian is gone.',
-            hint: 'Type: <code>az group delete --name boss-rg</code>',
+            text: 'Do the deed: <code>az group delete --name boss-rg --yes</code> (deletion is destructive — the CLI demands explicit consent), then verify with <code>az vm list -o table</code> that the guardian is gone.',
+            hint: 'Type: <code>az group delete --name boss-rg --yes</code>',
             check: (e) => e.cmd === 'az' && !e.world.azure.groups['boss-rg'] && !e.world.azure.vms['guardian'],
             success: 'Clean battlefield, clean bill.',
           },
@@ -359,8 +359,8 @@
           {
             text: 'Interrogate the sick pod: <code>kubectl describe pod &lt;payment-pod-name&gt; -n shop</code> (copy the exact name from get pods). Read the <b>Events</b> at the bottom.',
             hint: 'Run <code>kubectl get pods -n shop</code>, copy the payment-xxxx name, then <code>kubectl describe pod payment-xxxx -n shop</code>',
-            check: (e) => e.cmd === 'kubectl' && e.argv.includes('describe') && (e.out.includes('manifest unknown') || e.out.includes('tag not found')),
-            success: 'Events reveal: "Failed to pull image ... tag not found". Someone shipped an image tag that does not exist.',
+            check: (e) => e.cmd === 'kubectl' && e.argv.includes('describe') && e.out.includes('Back-off restarting'),
+            success: 'Events reveal: "Back-off restarting failed container" — it starts, crashes, and kubelet keeps retrying. Someone shipped a broken release.',
           },
           {
             text: 'Hear the container\'s last words: <code>kubectl logs &lt;payment-pod-name&gt; -n shop</code>.',
@@ -535,7 +535,7 @@
         boss: true,
         story:
           '🐉 The <b>Chaos Wyrm</b> slams into the Keep and corrupts the shop ward\'s <code>frontend</code> — ' +
-          'it now points at an image that does not exist, and customers see nothing but errors. ' +
+          'it now runs a poisoned release that crashes on startup, and customers see nothing but errors. ' +
           'No hints will save you now, warden. Diagnose it (get → describe/logs), cure it ' +
           '(the good image is <code>shop-frontend:2.1</code>), and prove the cure. ' +
           '<br><br>⚠️ <i>Wrong quiz answers cost a heart.</i>',
@@ -572,8 +572,8 @@
           {
             text: 'Do it — interrogate a broken frontend pod (describe or logs) and find the evidence.',
             hint: 'Type: <code>kubectl describe pod frontend-xxxx -n shop</code> (get the name from get pods)',
-            check: (e) => e.cmd === 'kubectl' && (e.argv.includes('describe') || e.argv.includes('logs')) && (e.out.includes('tag not found') || e.out.includes('manifest unknown') || e.out.includes('FATAL')),
-            success: 'Evidence: image "shop-frontend:3.0-broken" cannot be pulled. The Wyrm\'s corruption is exposed.',
+            check: (e) => e.cmd === 'kubectl' && (e.argv.includes('describe') || e.argv.includes('logs')) && (e.out.includes('Back-off restarting') || e.out.includes('FATAL')),
+            success: 'Evidence: release "shop-frontend:3.0-broken" crashes at startup — Events show the back-off, logs show the FATAL. The Wyrm\'s corruption is exposed.',
           },
           {
             text: 'Strike! Point the frontend back at the true image, <code>shop-frontend:2.1</code>.',

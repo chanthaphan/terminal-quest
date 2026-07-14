@@ -595,9 +595,15 @@
         qq.innerHTML = tr(task.quiz.question);
         box.appendChild(qq);
         const quizBox = el('div', 'quiz-box');
-        task.quiz.choices.forEach((choice, i) => {
-          const btn = el('button', 'quiz-btn', tr(choice));
-          btn.addEventListener('click', () => G.answerQuiz(i, btn));
+        // shuffle the choices — the correct answer must not always sit in the same slot
+        const order = task.quiz.choices.map((_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        order.forEach((origIdx) => {
+          const btn = el('button', 'quiz-btn', tr(task.quiz.choices[origIdx]));
+          btn.addEventListener('click', () => G.answerQuiz(origIdx, btn));
           quizBox.appendChild(btn);
         });
         box.appendChild(quizBox);
