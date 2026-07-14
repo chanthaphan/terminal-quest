@@ -22,7 +22,7 @@
           {
             text: 'Reveal your current location in the filesystem with <code>pwd</code> (<b>p</b>rint <b>w</b>orking <b>d</b>irectory).',
             hint: 'Type: <code>pwd</code>',
-            check: (e) => e.cmd === 'pwd' && e.ok,
+            check: (e) => e.ok && (e.cmd === 'pwd' || (e.cmd === 'echo' && e.out.trim() === e.world.cwd)),
             success: 'You stand in /home/hero — every user has a home directory.',
           },
           {
@@ -34,18 +34,18 @@
           {
             text: 'Read the note: <code>cat welcome.txt</code>. <code>cat</code> prints a file\'s contents.',
             hint: 'Type: <code>cat welcome.txt</code>',
-            check: (e) => e.cmd === 'cat' && e.out.includes('Welcome, apprentice'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('Welcome, apprentice'),
           },
           {
             text: 'Something is hidden here. Files starting with a dot are invisible to plain <code>ls</code>. Reveal them with <code>ls -a</code>.',
             hint: 'Type: <code>ls -a</code> — the <code>-a</code> flag means "all".',
-            check: (e) => e.cmd === 'ls' && e.argv.includes('-a') && e.out.includes('.secret_rune'),
+            check: (e) => e.cmd === 'ls' && CLIQ.hasFlag(e, 'a') && e.out.includes('.secret_rune'),
             success: 'A hidden rune appears: .secret_rune',
           },
           {
             text: 'Read the hidden rune with <code>cat</code>.',
             hint: 'Type: <code>cat .secret_rune</code>',
-            check: (e) => e.cmd === 'cat' && e.out.includes('LUMOS_SHELL'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('LUMOS_SHELL'),
           },
           {
             text: 'Walk into the <code>scrolls</code> chamber using <code>cd</code> (<b>c</b>hange <b>d</b>irectory).',
@@ -125,23 +125,23 @@
           {
             text: 'How many dragons? Count matching lines with the <code>-c</code> flag.',
             hint: 'Type: <code>grep -c dragon scrolls/beasts.txt</code>',
-            check: (e) => e.cmd === 'grep' && e.argv.includes('-c') && e.out.trim() === '3',
+            check: (e) => e.cmd === 'grep' && e.out.trim() === '3' && (CLIQ.hasFlag(e, 'c') || /\|\s*wc/.test(e.raw)),
             success: 'Three dragons. -c counts matching lines.',
           },
           {
             text: 'The quest ledger logged failures. Show ERROR lines <i>with line numbers</i>: <code>grep -n ERROR library/ledger.log</code>.',
             hint: 'Type: <code>grep -n ERROR library/ledger.log</code>',
-            check: (e) => e.cmd === 'grep' && e.argv.includes('-n') && e.out.includes('ERROR'),
+            check: (e) => e.cmd === 'grep' && CLIQ.hasFlag(e, 'n') && e.out.includes('ERROR'),
           },
           {
             text: 'Peek at just the first 2 lines of the ledger with <code>head -n 2 library/ledger.log</code>. (<code>tail</code> shows the end.)',
             hint: 'Type: <code>head -n 2 library/ledger.log</code> (the shorthand <code>head -2</code> works too)',
-            check: (e) => (e.cmd === 'head' || e.cmd === 'tail') && e.ok && (e.argv.includes('-n') || e.argv.some((x) => /^-\d+$/.test(x))),
+            check: (e) => (e.cmd === 'head' || e.cmd === 'tail') && e.ok && e.argv.some((x) => x === '-n' || /^-n?\d+$/.test(x)),
           },
           {
             text: 'Measure the bestiary: <code>wc -l scrolls/beasts.txt</code> counts its lines.',
             hint: 'Type: <code>wc -l scrolls/beasts.txt</code>',
-            check: (e) => e.cmd === 'wc' && e.out.trim().startsWith('6'),
+            check: (e) => (e.cmd === 'wc' || /\|\s*wc/.test(e.raw)) && e.out.trim().startsWith('6'),
           },
         ],
       },
@@ -198,7 +198,7 @@
           {
             text: 'Inspect the crypt script\'s permissions: <code>ls -l crypt/locked.sh</code>.',
             hint: 'Type: <code>ls -l crypt/locked.sh</code>',
-            check: (e) => e.cmd === 'ls' && e.argv.includes('-l') && e.out.includes('locked.sh'),
+            check: (e) => e.cmd === 'ls' && CLIQ.hasFlag(e, 'l') && e.out.includes('locked.sh'),
             success: 'It shows -rw-r--r-- : the owner can read+write, everyone else read only. No one can execute it.',
           },
           {

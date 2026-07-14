@@ -27,7 +27,7 @@
           {
             text: 'Reveal your network interfaces and IP address: <code>ip addr</code>.',
             hint: 'Type: <code>ip addr</code> (old-timers use <code>ifconfig</code> — both work here)',
-            check: (e) => (e.cmd === 'ip' || e.cmd === 'ifconfig') && e.out.includes('10.0.1.5'),
+            check: (e) => (e.cmd === 'ip' || e.cmd === 'ifconfig' || e.cmd === 'hostname') && e.out.includes('10.0.1.5'),
             success: 'eth0 carries 10.0.1.5/24 — that is you. (lo 127.0.0.1 is the loopback: the machine talking to itself.)',
           },
           {
@@ -76,7 +76,7 @@
           {
             text: 'Ask DNS for quest.dev\'s address, tersely: <code>dig +short quest.dev</code>.',
             hint: 'Type: <code>dig +short quest.dev</code>',
-            check: (e) => e.cmd === 'dig' && e.out.includes('203.0.113.10'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.out.includes('203.0.113.10'),
           },
           {
             text: 'Try the other oracle: <code>nslookup api.quest.dev</code>.',
@@ -113,7 +113,7 @@
           {
             text: 'You are on web-01 now. Read the note someone left: <code>cat notes.txt</code>.',
             hint: 'Type: <code>cat notes.txt</code> (you land in /home/hero on the remote machine)',
-            check: (e) => e.cmd === 'cat' && e.out.includes('db-01'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('db-01'),
           },
           {
             text: 'Step back out with <code>exit</code>.',
@@ -166,7 +166,7 @@
           {
             text: 'Sometimes you only want the <b>headers</b> (status code, server, content type): <code>curl -I http://quest.dev</code>.',
             hint: 'Type: <code>curl -I http://quest.dev</code>',
-            check: (e) => e.cmd === 'curl' && e.argv.includes('-I') && e.out.includes('200 OK'),
+            check: (e) => e.cmd === 'curl' && CLIQ.hasFlag(e, 'I') && e.out.includes('200 OK'),
             success: 'HTTP/1.1 200 OK — the universal "all is well".',
           },
           {
@@ -358,7 +358,7 @@
           {
             text: 'Resolve a name yourself: <code>dig www.quest.dev</code> — find the A record in the ANSWER SECTION.',
             hint: 'Type: <code>dig www.quest.dev</code>',
-            check: (e) => e.cmd === 'dig' && e.out.includes('203.0.113.10'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.out.includes('203.0.113.10'),
           },
           {
             quiz: {
@@ -372,7 +372,7 @@
           {
             text: 'Companies run <i>internal</i> DNS too. Resolve the internal name: <code>dig +short db-01.quest.internal</code>.',
             hint: 'Type: <code>dig +short db-01.quest.internal</code>',
-            check: (e) => e.cmd === 'dig' && e.out.includes('10.0.2.5'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.out.includes('10.0.2.5'),
             success: 'A private IP from internal DNS — invisible to the outside world.',
           },
           {
@@ -428,7 +428,7 @@
           {
             text: 'Before DNS, there was a simple file. Read your machine\'s local name table: <code>cat /etc/hosts</code>.',
             hint: 'Type: <code>cat /etc/hosts</code>',
-            check: (e) => e.cmd === 'cat' && e.out.includes('web-01'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('web-01'),
             success: '/etc/hosts is checked BEFORE DNS — handy for testing, dangerous when forgotten.',
           },
           {
@@ -471,7 +471,7 @@
           {
             text: 'Cast it: <code>dig +short quest.dev</code>.',
             hint: 'Type: <code>dig +short quest.dev</code>',
-            check: (e) => e.cmd === 'dig' && e.out.includes('203.0.113.10'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.out.includes('203.0.113.10'),
             success: 'Resolves fine. DNS is innocent — this time.',
           },
           {

@@ -68,7 +68,7 @@
           {
             text: '<b>Trial of Names.</b> Prove the realm\'s name still resolves — tersely.',
             hint: 'Type: <code>dig +short quest.dev</code>',
-            check: (e) => e.cmd === 'dig' && e.out.includes('203.0.113.10'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.out.includes('203.0.113.10'),
           },
           {
             text: '<b>Trial of Gates.</b> Knock on quest.dev\'s secure gate (443) and prove it stands open.',

@@ -91,12 +91,12 @@
           {
             text: 'Now <code>docker ps</code> — it has vanished from the living!',
             hint: 'Type: <code>docker ps</code>',
-            check: (e) => e.cmd === 'docker' && e.argv.includes('ps') && !e.argv.includes('-a') && !e.out.includes('web'),
+            check: (e) => e.cmd === 'docker' && e.argv.includes('ps') && !e.argv.includes('-a') && !e.argv.includes('--all') && !e.out.includes('web'),
           },
           {
             text: 'Reveal the fallen as well: <code>docker ps -a</code>.',
             hint: 'Type: <code>docker ps -a</code>',
-            check: (e) => e.cmd === 'docker' && e.argv.includes('-a') && e.out.includes('Exited'),
+            check: (e) => e.cmd === 'docker' && (e.argv.includes('-a') || e.argv.includes('--all')) && e.out.includes('Exited'),
             success: 'There it lies: Exited (0). Stopped, not gone.',
           },
           {
@@ -184,7 +184,7 @@
           {
             text: 'A recipe waits in <code>foundry/</code>. Read it: <code>cat foundry/Dockerfile</code>.',
             hint: 'Type: <code>cat foundry/Dockerfile</code>',
-            check: (e) => e.cmd === 'cat' && e.out.includes('FROM'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('FROM'),
             success: 'FROM = the base mold. COPY adds your files. CMD is what runs at birth.',
           },
           {
@@ -294,7 +294,7 @@
           {
             text: 'Something died here. Find the fallen container.',
             hint: 'Type: <code>docker ps -a</code> — the living-only roll won\'t show it',
-            check: (e) => e.cmd === 'docker' && e.argv.includes('-a') && e.out.includes('Exited (1)'),
+            check: (e) => e.cmd === 'docker' && (e.argv.includes('-a') || e.argv.includes('--all')) && e.out.includes('Exited (1)'),
             success: 'golem — Exited (1). Exit code 1 means it died screaming.',
           },
           {

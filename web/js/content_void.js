@@ -92,7 +92,7 @@
           {
             text: 'Confirm DNS is truly dead: query the name tersely.',
             hint: 'Type: <code>dig +short quest.dev</code>',
-            check: (e) => e.cmd === 'dig' && e.raw.includes('quest.dev') && !e.out.includes('203.0.113.10'),
+            check: (e) => (e.cmd === 'dig' || e.cmd === 'nslookup') && e.raw.includes('quest.dev') && !e.out.includes('203.0.113.10'),
             success: 'Silence. The zone record is gone.',
           },
           {
@@ -122,7 +122,7 @@
           {
             text: 'Read nginx\'s dying words in <code>/var/log/nginx-error.log</code>.',
             hint: 'Type: <code>cat /var/log/nginx-error.log</code> (or tail)',
-            check: (e) => (e.cmd === 'cat' || e.cmd === 'tail') && e.out.includes('5432'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('5432'),
             success: '"upstream timed out ... 10.0.2.5:5432" — nginx fell because the DATABASE is unreachable. The cascade goes deeper.',
           },
           {

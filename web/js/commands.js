@@ -21,6 +21,10 @@
   }
   CLIQ.flags = flags;
 
+  // For quest validators: does the command line carry single-letter flag `ch`,
+  // in any spelling — `-l`, or combined like `-la` / `-tln`?
+  CLIQ.hasFlag = (e, ch) => e.argv.some((t) => /^-[A-Za-z]+$/.test(t) && t.slice(1).includes(ch));
+
   function modeStr(node) {
     const m = node.mode == null ? (node.type === 'dir' ? 0o755 : 0o644) : node.mode;
     const bits = 'rwxrwxrwx';
@@ -254,6 +258,9 @@
     // classic numeric shorthand: head -5 FILE / tail -2 FILE
     const short = rest.find((x) => /^-\d+$/.test(x));
     if (short) { n = parseInt(short.slice(1), 10) || n; rest.splice(rest.indexOf(short), 1); }
+    // attached form: head -n2 FILE
+    const attached = a.find((x) => /^-n\d+$/.test(x));
+    if (attached) n = parseInt(attached.slice(2), 10) || n;
     return { n, rest };
   }
   C.head = (a, w, stdin) => {

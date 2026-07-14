@@ -494,7 +494,7 @@
           {
             text: 'A scroll awaits in <code>manifests/</code>. Read it: <code>cat manifests/mage.yaml</code>. Note the kind, replicas, and image.',
             hint: 'Type: <code>cat manifests/mage.yaml</code>',
-            check: (e) => e.cmd === 'cat' && e.out.includes('kind: Deployment'),
+            check: (e) => ['cat', 'head', 'tail', 'grep'].includes(e.cmd) && e.out.includes('kind: Deployment'),
           },
           {
             text: 'Cast it into reality: <code>kubectl apply -f manifests/mage.yaml</code>.',
